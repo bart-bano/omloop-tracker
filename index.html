@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Omloop Tracker</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, sans-serif; background: #0a0a0a; color: #fff; height: 100vh; overflow: hidden; }
+.header { background: linear-gradient(135deg, #c8102e, #7a0000); padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; height: 48px; }
+.header h1 { font-size: 14px; font-weight: 800; }
+.sub { font-size: 9px; opacity: 0.7; }
+.clock { font-size: 17px; font-weight: 700; font-family: monospace; }
+.main { display: flex; height: calc(100vh - 48px); }
+.left { width: 42%; border-right: 2px solid #222; display: flex; flex-direction: column; background: #111; overflow: hidden; }
+.right { flex: 1; display: flex; flex-direction: column; background: #0d0d0d; overflow: hidden; }
+.stitle { background: #1c1c1c; padding: 6px 12px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #666; border-bottom: 1px solid #222; flex-shrink: 0; }
+.num-area { padding: 8px; border-bottom: 1px solid #222; flex-shrink: 0; }
+.num-display { font-size: 50px; font-weight: 900; text-align: center; font-family: monospace; line-height: 1; min-height: 54px; letter-spacing: 4px; color: #2a2a2a; }
+.num-display.has-num { color: #fff; }
+.numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-top: 7px; }
+.np { background: #252525; border: none; color: #fff; font-size: 22px; font-weight: 700; padding: 14px 5px; border-radius: 8px; cursor: pointer; width: 100%; }
+.np.del { background: #2a1515; color: #ff6b6b; }
+.np.clr { background: #15152a; color: #6b9fff; }
+.rider-area { flex: 1; overflow-y: auto; padding: 10px; }
+.rider-card { background: #1e1e1e; border-radius: 10px; padding: 12px; border-left: 4px solid #c8102e; margin-bottom: 8px; }
+.r-bib { font-size: 10px; color: #666; font-weight: 700; }
+.r-name { font-size: 17px; font-weight: 800; line-height: 1.1; margin: 3px 0; }
+.r-nat { font-size: 12px; color: #999; margin-bottom: 6px; }
+.r-team { font-size: 12px; font-weight: 700; color: #f0c040; background: #1e1800; padding: 5px 9px; border-radius: 6px; }
+.no-result { color: #333; text-align: center; padding: 20px 10px; font-size: 13px; line-height: 1.8; }
+.abtns { display: flex; gap: 6px; margin-top: 8px; }
+.btn { border: none; border-radius: 8px; padding: 10px 4px; font-size: 12px; font-weight: 700; cursor: pointer; width: 100%; }
+.btn-grp { background: #0a2a0a; border: 1px solid #2d6b2d; color: #5dff5d; }
+.btn-dnf { background: #2a0a0a; border: 1px solid #6b2d2d; color: #ff5d5d; }
+.btn-und { background: #1a1a1a; border: 1px solid #444; color: #aaa; }
+.recent-row { padding: 6px 8px; border-top: 1px solid #1a1a1a; display: flex; flex-wrap: wrap; gap: 4px; flex-shrink: 0; max-height: 48px; overflow: hidden; }
+.rec { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; padding: 3px 7px; font-size: 10px; color: #888; cursor: pointer; }
+.dnf-section { border-top: 1px solid #1a1a1a; padding: 6px 8px; flex-shrink: 0; max-height: 70px; overflow-y: auto; }
+.dnf-title { font-size: 9px; color: #ff4444; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; margin-bottom: 4px; }
+.dnf-chips { display: flex; flex-wrap: wrap; gap: 3px; }
+.dc { background: #2a0a0a; border: 1px solid #4a1a1a; border-radius: 10px; padding: 2px 6px; font-size: 10px; color: #ff6b6b; cursor: pointer; }
+.add-group-bar { padding: 7px 8px; border-bottom: 1px solid #222; display: flex; gap: 5px; flex-shrink: 0; }
+.add-group-bar button { flex: 1; border: none; border-radius: 8px; padding: 8px 3px; font-size: 10px; font-weight: 700; cursor: pointer; }
+.abr { background: #2a1500; color: #ff6b00; border: 1px solid #ff6b00 !important; }
+.ach { background: #001a2a; color: #00aaff; border: 1px solid #00aaff !important; }
+.ape { background: #2a2000; color: #ffaa00; border: 1px solid #ffaa00 !important; }
+.adr { background: #1a1a1a; color: #666; border: 1px solid #444 !important; }
+.groups-scroll { flex: 1; overflow-y: auto; padding: 8px; }
+.gc { background: #181818; border-radius: 10px; margin-bottom: 8px; overflow: hidden; border: 1px solid #252525; }
+.gb { border-left: 4px solid #ff6b00; }
+.gch { border-left: 4px solid #00aaff; }
+.gp { border-left: 4px solid #ffaa00; }
+.gd { border-left: 4px solid #555; }
+.group-head { display: flex; align-items: center; padding: 7px 8px; gap: 5px; }
+.gni { background: transparent; border: none; font-size: 12px; font-weight: 800; text-transform: uppercase; flex: 1; outline: none; min-width: 0; padding: 2px 4px; border-radius: 4px; }
+.gb .gni { color: #ff6b00; }
+.gch .gni { color: #00aaff; }
+.gp .gni { color: #ffaa00; }
+.gd .gni { color: #666; }
+.gni:focus { background: #2a2a2a; }
+.gap-b { padding: 3px 6px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; white-space: nowrap; flex-shrink: 0; border: none; }
+.gbn { background: #0a2a0a; border: 1px solid #2d6b2d !important; color: #5dff5d; }
+.gbp { background: #2a1800; border: 1px solid #6b4400 !important; color: #ffaa00; }
+.gbm { background: #1a1a1a; border: 1px solid #333 !important; color: #666; }
+.cnt { background: #2a2a2a; border-radius: 10px; padding: 2px 5px; font-size: 10px; color: #888; flex-shrink: 0; }
+.bdg { background: #2a0a0a; border: none; color: #ff4444; border-radius: 6px; padding: 4px 7px; cursor: pointer; font-size: 13px; flex-shrink: 0; }
+.group-riders { padding: 3px 8px 8px; display: flex; flex-wrap: wrap; gap: 3px; min-height: 26px; }
+.rc { background: #242424; border-radius: 14px; padding: 3px 8px; font-size: 11px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; border: 1px solid #333; }
+.cn { color: #666; font-size: 9px; }
+.nr { color: #333; font-size: 11px; font-style: italic; }
+.queue-section { border-top: 2px solid #2a4a2a; background: #0d1a0d; padding: 7px 8px; flex-shrink: 0; max-height: 120px; overflow-y: auto; }
+.queue-head { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; }
+.queue-title { font-size: 10px; font-weight: 800; color: #5dff5d; text-transform: uppercase; letter-spacing: 1px; flex: 1; }
+.queue-assign { background: #1a4a1a; border: 1px solid #5dff5d; color: #5dff5d; border-radius: 6px; padding: 4px 8px; font-size: 11px; font-weight: 700; cursor: pointer; }
+.queue-clr { background: #2a1515; border: none; color: #ff6b6b; border-radius: 6px; padding: 4px 7px; font-size: 12px; cursor: pointer; }
+.queue-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.qchip { background: #1a3a1a; border: 1px solid #2d6b2d; border-radius: 12px; padding: 3px 8px; font-size: 11px; color: #5dff5d; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+.qchip:active { background: #3a0a0a; border-color: #ff4444; color: #ff4444; }
+.qchip .qnum { font-weight: 800; }
+.qchip .qname { color: #aaa; font-size: 10px; }
+.overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 999; align-items: center; justify-content: center; }
+.overlay.show { display: flex; }
+.mbox { background: #1c1c1c; border-radius: 14px; padding: 18px; width: 88vw; max-width: 300px; border: 1px solid #333; }
+.mbox h3 { font-size: 14px; font-weight: 700; text-align: center; margin-bottom: 12px; }
+.gg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 10px; }
+.go { background: #2a2a2a; border: none; color: #fff; border-radius: 8px; padding: 12px 4px; font-size: 14px; font-weight: 700; cursor: pointer; width: 100%; }
+.gi { width: 100%; background: #2a2a2a; border: 1px solid #444; color: #fff; border-radius: 8px; padding: 10px; font-size: 16px; text-align: center; margin-bottom: 12px; }
+.mbtns { display: flex; gap: 8px; }
+.mbtns button { flex: 1; border: none; border-radius: 8px; padding: 12px; font-size: 14px; cursor: pointer; font-weight: 700; }
+.bc2 { background: #2a2a2a; color: #fff; font-weight: 400; }
+.bok { background: #c8102e; color: #fff; }
+.ppb { width: 100%; background: #242424; border: 1px solid #333; color: #fff; border-radius: 8px; padding: 12px; font-size: 14px; font-weight: 600; cursor: pointer; margin-bottom: 6px; text-align: left; display: block; }
+.bcp { width: 100%; background: #2a1515; border: none; color: #ff6b6b; border-radius: 8px; padding: 12px; font-size: 14px; cursor: pointer; margin-top: 4px; display: block; }
+.bov { background: #1a1a2a; border: none; color: #aaaaff; border-radius: 6px; padding: 4px 7px; cursor: pointer; font-size: 13px; flex-shrink: 0; }
+.ovbox { background: #1a1a1a; border-radius: 14px; padding: 0; width: 92vw; max-width: 420px; border: 1px solid #333; max-height: 85vh; display: flex; flex-direction: column; overflow: hidden; }
+.ovbox-head { padding: 16px 18px 12px; border-bottom: 1px solid #2a2a2a; flex-shrink: 0; }
+.ovbox-head h3 { font-size: 18px; font-weight: 800; text-transform: uppercase; }
+.ovbox-head .ov-gap { font-size: 13px; color: #888; margin-top: 3px; }
+.ov-list { overflow-y: auto; flex: 1; padding: 8px 12px; }
+.ov-rider { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #1e1e1e; }
+.ov-rider:last-child { border-bottom: none; }
+.ov-num { font-size: 22px; font-weight: 900; font-family: monospace; color: #555; min-width: 44px; text-align: right; }
+.ov-info { flex: 1; }
+.ov-name { font-size: 16px; font-weight: 800; line-height: 1.1; }
+.ov-team { font-size: 11px; color: #f0c040; margin-top: 2px; }
+.ov-nat { font-size: 11px; color: #666; }
+.ovbox-foot { padding: 12px 16px; border-top: 1px solid #2a2a2a; flex-shrink: 0; }
+.ov-close { width: 100%; background: #2a2a2a; border: none; color: #fff; border-radius: 10px; padding: 13px; font-size: 15px; font-weight: 700; cursor: pointer; }
+/* LOG */
+.log-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 1000; flex-direction: column; }
+.log-overlay.show { display: flex; }
+.log-header { background: #1a1a3a; padding: 12px 16px; display: flex; align-items: center; gap: 10px; flex-shrink: 0; border-bottom: 2px solid #333; }
+.log-header h2 { font-size: 16px; font-weight: 800; color: #aaaaff; flex: 1; }
+.log-export { background: #0a2a0a; border: 1px solid #2d6b2d; color: #5dff5d; border-radius: 8px; padding: 6px 12px; font-size: 12px; font-weight: 700; cursor: pointer; }
+.log-close { background: #2a1515; border: none; color: #ff6b6b; border-radius: 8px; padding: 6px 12px; font-size: 14px; font-weight: 700; cursor: pointer; }
+.log-add { padding: 12px 14px; border-bottom: 1px solid #222; flex-shrink: 0; background: #111; }
+.log-add-title { font-size: 10px; color: #666; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; margin-bottom: 8px; }
+.event-types { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.evt-btn { border: none; border-radius: 20px; padding: 6px 12px; font-size: 12px; font-weight: 700; cursor: pointer; }
+.evt-btn.sel { outline: 3px solid #fff; }
+.evt-crash { background: #3a0a0a; color: #ff6b6b; border: 1px solid #6b2d2d; }
+.evt-flat  { background: #2a1500; color: #ffaa44; border: 1px solid #6b4400; }
+.evt-attack{ background: #0a1a3a; color: #5daaff; border: 1px solid #2d4a8b; }
+.evt-mech  { background: #1a1a0a; color: #dddd44; border: 1px solid #5b5b00; }
+.evt-dnf   { background: #2a0a0a; color: #ff4444; border: 1px solid #6b0000; }
+.evt-note  { background: #1a1a1a; color: #aaa; border: 1px solid #444; }
+.log-row2 { display: flex; gap: 8px; align-items: center; }
+.log-km { background: #2a2a2a; border: 1px solid #444; color: #fff; border-radius: 8px; padding: 8px 10px; font-size: 14px; width: 80px; text-align: center; }
+.log-rider-sel { flex: 1; background: #2a2a2a; border: 1px solid #444; color: #aaa; border-radius: 8px; padding: 8px 10px; font-size: 12px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
+.log-note-inp { flex: 1; background: #2a2a2a; border: 1px solid #444; color: #fff; border-radius: 8px; padding: 8px 10px; font-size: 13px; }
+.log-save { background: #c8102e; border: none; color: #fff; border-radius: 8px; padding: 8px 14px; font-size: 13px; font-weight: 700; cursor: pointer; flex-shrink: 0; }
+.log-list { flex: 1; overflow-y: auto; padding: 10px 14px; }
+.log-empty { color: #333; text-align: center; padding: 40px; font-size: 14px; }
+.log-entry { background: #141414; border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; border-left: 4px solid #333; display: flex; gap: 10px; align-items: flex-start; }
+.le-time { font-size: 11px; font-family: monospace; color: #555; white-space: nowrap; padding-top: 2px; }
+.le-km { font-size: 11px; color: #888; white-space: nowrap; padding-top: 2px; }
+.le-body { flex: 1; }
+.le-type { font-size: 12px; font-weight: 800; text-transform: uppercase; margin-bottom: 2px; }
+.le-rider { font-size: 13px; font-weight: 700; }
+.le-note { font-size: 12px; color: #888; margin-top: 2px; }
+.le-del { background: none; border: none; color: #333; cursor: pointer; font-size: 14px; padding: 0 4px; flex-shrink: 0; }
+.le-del:active { color: #ff4444; }
+/* export modal */
+.exp-box { background: #111; border-radius: 14px; padding: 16px; width: 92vw; max-width: 500px; max-height: 80vh; display: flex; flex-direction: column; border: 1px solid #333; }
+.exp-box h3 { font-size: 15px; font-weight: 700; margin-bottom: 10px; color: #aaaaff; }
+.exp-text { flex: 1; background: #0a0a0a; border: 1px solid #333; border-radius: 8px; color: #ccc; font-size: 12px; font-family: monospace; padding: 10px; overflow-y: auto; white-space: pre-wrap; min-height: 200px; max-height: 50vh; }
+.exp-btns { display: flex; gap: 8px; margin-top: 10px; }
+.exp-copy { flex: 1; background: #1a4a1a; border: 1px solid #2d6b2d; color: #5dff5d; border-radius: 8px; padding: 11px; font-size: 13px; font-weight: 700; cursor: pointer; }
+.exp-close { flex: 1; background: #2a2a2a; border: none; color: #fff; border-radius: 8px; padding: 11px; font-size: 13px; cursor: pointer; }
+/* GC */
+.gc-badge { background: #1a002a; border: 1px solid #aa44ff; border-radius: 6px; padding: 3px 8px; font-size: 11px; color: #cc88ff; font-weight: 700; margin-top: 5px; display: inline-block; }
+.gc-entry { display: flex; align-items: center; padding: 9px 12px; border-bottom: 1px solid #1a1a1a; gap: 10px; }
+.gc-entry:last-child { border-bottom: none; }
+.gc-pos { font-size: 20px; font-weight: 900; font-family: monospace; min-width: 36px; text-align: right; }
+.gc-pos.leader { color: #ffdd00; }
+.gc-pos.top10 { color: #cc88ff; }
+.gc-pos.rest { color: #555; }
+.gc-info { flex: 1; }
+.gc-name { font-size: 14px; font-weight: 800; line-height: 1.2; }
+.gc-team-sm { font-size: 10px; color: #f0c040; }
+.gc-time { font-size: 16px; font-weight: 800; font-family: monospace; color: #cc88ff; min-width: 60px; text-align: right; }
+.gc-time.leader { color: #ffdd00; }
+.gc-edit-btn { background: #1a002a; border: 1px solid #6633aa; color: #cc88ff; border-radius: 6px; padding: 4px 8px; font-size: 11px; cursor: pointer; flex-shrink: 0; }
+</style>
+</head>
+<body>
+<div class="header">
+  <div><div class="sub">TEAM CAR</div><h1 id="raceTitle">OMLOOP HET NIEUWSBLAD 2026</h1></div>
+  <div style="display:flex;align-items:center;gap:8px">
+    <button id="startBtn" onclick="STRT()" style="background:#0a3a0a;border:2px solid #5dff5d;color:#5dff5d;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:800;cursor:pointer;line-height:1.2">🏁 START<br><span id="startLbl" style="font-size:9px;font-weight:400;opacity:0.7">tap to start</span></button>
+    <button id="stopBtn" onclick="STP()" style="background:#1a1a1a;border:2px solid #444;color:#666;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:800;cursor:pointer;line-height:1.2">🏴 STOP<br><span id="stopLbl" style="font-size:9px;font-weight:400;opacity:0.7">finish</span></button>
+    <button onclick="OGC()" style="background:#1a002a;border:1px solid #aa44ff;color:#cc88ff;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;cursor:pointer">🏆 GC</button>
+    <button onclick="OPT()" style="background:#1a1a2a;border:1px solid #666;color:#aaa;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;cursor:pointer">👥 CSV</button>
+    <button onclick="OLG()" style="background:#1a1a3a;border:1px solid #4444aa;color:#aaaaff;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;cursor:pointer">📓 LOG</button>
+    <div class="clock" id="clk">--:--:--</div>
+  </div>
+</div>
+<div class="main">
+  <div class="left">
+    <div class="stitle">📻 Number lookup</div>
+    <div class="num-area">
+      <div class="num-display" id="nd">___</div>
+      <div class="numpad">
+        <button class="np" onclick="P('1')">1</button>
+        <button class="np" onclick="P('2')">2</button>
+        <button class="np" onclick="P('3')">3</button>
+        <button class="np" onclick="P('4')">4</button>
+        <button class="np" onclick="P('5')">5</button>
+        <button class="np" onclick="P('6')">6</button>
+        <button class="np" onclick="P('7')">7</button>
+        <button class="np" onclick="P('8')">8</button>
+        <button class="np" onclick="P('9')">9</button>
+        <button class="np clr" onclick="CLR()">CLR</button>
+        <button class="np" onclick="P('0')">0</button>
+        <button class="np del" onclick="DEL()">⌫</button>
+      </div>
+    </div>
+    <div class="rider-area" id="ra"><div class="no-result">Enter a bib number<br>on the keypad</div></div>
+    <div class="queue-section" id="qs" style="display:none">
+      <div class="queue-head">
+        <span class="queue-title">📋 QUEUE</span>
+        <button class="queue-assign" onclick="OQV()">👁 view</button>
+        <button class="queue-assign" onclick="OQP()">To group →</button>
+        <button class="queue-clr" onclick="QCL()">✕</button>
+      </div>
+      <div class="queue-chips" id="qc"></div>
+    </div>
+    <div class="recent-row" id="rr"></div>
+    <div class="dnf-section" id="ds" style="display:none">
+      <div class="dnf-title">🚫 DNF</div>
+      <div class="dnf-chips" id="dc"></div>
+    </div>
+  </div>
+  <div class="right">
+    <div class="stitle">⏱ Groups & Time gaps</div>
+    <div class="add-group-bar">
+      <button class="abr" onclick="AG('break','BREAKAWAY','gb')">+ BREAK</button>
+      <button class="ach" onclick="AG('chase','CHASERS','gch')">+ CHASE</button>
+      <button class="ape" onclick="AG('peloton','PELOTON','gp')">+ PELO</button>
+      <button class="adr" onclick="AG('dropped','DROPPED','gd')">+ DROP</button>
+    </div>
+    <div class="groups-scroll" id="gs"><div style="color:#333;text-align:center;padding:30px 10px;font-size:12px;line-height:1.8">Tap above<br>to add a group</div></div>
+  </div>
+</div>
+
+<div class="overlay" id="gapOv">
+  <div class="mbox">
+    <h3 id="gtitle">Time gap</h3>
+    <div class="gg">
+      <button class="go" onclick="SG('0:10')">0:10</button><button class="go" onclick="SG('0:20')">0:20</button><button class="go" onclick="SG('0:30')">0:30</button>
+      <button class="go" onclick="SG('0:45')">0:45</button><button class="go" onclick="SG('1:00')">1:00</button><button class="go" onclick="SG('1:30')">1:30</button>
+      <button class="go" onclick="SG('2:00')">2:00</button><button class="go" onclick="SG('3:00')">3:00</button><button class="go" onclick="SG('5:00')">5:00</button>
+    </div>
+    <input class="gi" type="text" id="gi" placeholder="e.g. 1:47" inputmode="decimal">
+    <div class="mbtns">
+      <button class="bc2" onclick="CGM()">Cancel</button>
+      <button class="bok" onclick="OKG()">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- CSV UPLOAD MODAL -->
+<div class="log-overlay" id="ptOv">
+  <div class="log-header">
+    <h2>👥 Load participants</h2>
+    <button class="log-close" onclick="CPT()">✕ Close</button>
+  </div>
+  <div style="padding:16px;overflow-y:auto;flex:1">
+    <div style="background:#1a1a0a;border:1px solid #444;border-radius:10px;padding:14px;margin-bottom:14px">
+      <div style="font-size:11px;color:#ffaa44;font-weight:800;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">📋 CSV Format</div>
+      <div style="font-family:monospace;font-size:12px;color:#aaa;line-height:1.8">
+        nr,name,nat,team<br>
+        1,WÆRENSKJOLD Søren,NOR,Uno-X Mobility<br>
+        11,PHILIPSEN Jasper,BEL,Alpecin-Premier Tech<br>
+        ...
+      </div>
+      <button onclick="DLT()" style="margin-top:10px;background:#2a2a00;border:1px solid #666;color:#ffaa44;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;width:100%">⬇️ Download empty template</button>
+    </div>
+
+    <div style="font-size:11px;color:#666;text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:8px">Race name</div>
+    <input type="text" id="ptRace" placeholder="e.g. Paris-Nice 2026"
+      style="width:100%;background:#2a2a2a;border:1px solid #444;color:#fff;border-radius:8px;padding:10px;font-size:14px;margin-bottom:14px">
+
+    <div style="font-size:11px;color:#666;text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:8px">Upload CSV file</div>
+    <input type="file" id="ptFile" accept=".csv,.txt"
+      style="width:100%;background:#2a2a2a;border:1px solid #444;color:#fff;border-radius:8px;padding:10px;font-size:13px;margin-bottom:10px">
+    <button onclick="PTL()" style="width:100%;background:#0a2a0a;border:1px solid #2d6b2d;color:#5dff5d;border-radius:8px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:14px">✅ Load riders</button>
+
+    <div id="ptResult" style="font-size:13px;min-height:40px;"></div>
+
+    <div style="margin-top:16px;border-top:1px solid #222;padding-top:14px">
+      <div style="font-size:11px;color:#888;margin-bottom:6px">Current race: <span id="ptCurRace" style="color:#f0c040"></span></div>
+      <div style="font-size:11px;color:#888;">Riders loaded: <span id="ptCurCount" style="color:#f0c040"></span></div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="pkOv">
+  <div class="mbox">
+    <h3 id="ptitle">Select group</h3>
+    <div id="pb"></div>
+    <button class="bcp" onclick="CPK()">Cancel</button>
+  </div>
+</div>
+
+<div class="overlay" id="ovOv">
+  <div class="ovbox">
+    <div class="ovbox-head">
+      <h3 id="ovTitle">KOPGROEP</h3>
+      <div class="ov-gap" id="ovGap"></div>
+    </div>
+    <div class="ov-list" id="ovList"></div>
+    <div class="ovbox-foot">
+      <button class="ov-close" onclick="COV()">✕ Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="qvOv">
+  <div class="ovbox">
+    <div class="ovbox-head">
+      <h3 id="qvTitle" style="color:#5dff5d">WACHTRIJ</h3>
+      <div class="ov-gap" id="qvCount"></div>
+    </div>
+    <div class="ov-list" id="qvList"></div>
+    <div class="ovbox-foot" style="display:flex;gap:8px">
+      <button class="ov-close" style="background:#1a4a1a;color:#5dff5d;border:1px solid #2d6b2d" onclick="CQV();OQP()">To group →</button>
+      <button class="ov-close" onclick="CQV()">✕ Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOG OVERLAY -->
+<div class="log-overlay" id="lgOv">
+  <div class="log-header">
+    <h2>📓 RACE LOG</h2>
+    <button class="log-export" onclick="OEX()">📤 Export</button>
+    <button onclick="RESET()" style="background:#2a1500;border:1px solid #6b3300;color:#ffaa44;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;">🗑 Reset</button>
+    <button class="log-close" onclick="CLG()">✕ Close</button>
+  </div>
+  <div class="log-add">
+    <div class="log-add-title">Add new event</div>
+    <div class="event-types">
+      <button class="evt-btn evt-crash" onclick="SEV('🚨 Crash','#ff6b6b')">🚨 Crash</button>
+      <button class="evt-btn evt-flat"  onclick="SEV('🔧 Flat tyre','#ffaa44')">🔧 Flat tyre</button>
+      <button class="evt-btn evt-attack"onclick="SEV('⚡ Attack','#5daaff')">⚡ Attack</button>
+      <button class="evt-btn evt-mech"  onclick="SEV('⚙️ Mechanical','#dddd44')">⚙️ Mechanical</button>
+      <button class="evt-btn evt-dnf"   onclick="SEV('🚫 DNF','#ff4444')">🚫 DNF</button>
+      <button class="evt-btn evt-note"  onclick="SEV('📝 Note','#aaa')">📝 Note</button>
+    </div>
+    <div class="log-row2">
+      <input class="log-km" type="number" id="lgKm" placeholder="km" inputmode="numeric" min="0" max="300">
+      <input type="number" id="lgRiderNum" placeholder="Rider nr." inputmode="numeric" style="width:80px;background:#2a2a2a;border:1px solid #444;color:#fff;border-radius:8px;padding:8px;font-size:14px;text-align:center;">
+      <button onclick="LGS()" style="background:#2a2a2a;border:1px solid #555;color:#fff;border-radius:8px;padding:8px 10px;font-size:13px;font-weight:700;cursor:pointer;">🔍</button>
+      <button class="log-save" onclick="SAV()">+ LOG</button>
+    </div>
+    <div id="lgRiderResult" style="font-size:12px;color:#f0c040;padding:4px 2px;min-height:18px;"></div>
+    <input class="log-note-inp" type="text" id="lgNote" placeholder="Note..." style="width:100%;margin-top:8px">
+  </div>
+  <div class="log-list" id="lgList"><div class="log-empty">No events logged yet</div></div>
+</div>
+
+<!-- LOG RIDER PICKER -->
+<div class="overlay" id="lrOv">
+  <div class="mbox">
+    <h3 id="lrTitle">Select rider</h3>
+    <input type="number" id="lrNum" placeholder="Bib number..." inputmode="numeric"
+      style="width:100%;background:#2a2a2a;border:1px solid #444;color:#fff;border-radius:8px;padding:10px;font-size:24px;text-align:center;margin-bottom:8px">
+    <button onclick="LRF()" style="width:100%;background:#2a2a2a;border:1px solid #555;color:#fff;border-radius:8px;padding:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px">🔍 Search rider</button>
+    <div id="lrResult" style="min-height:50px;margin-bottom:10px;color:#666;text-align:center;font-size:13px;padding:10px">Enter a number</div>
+    <div style="display:flex;gap:8px">
+      <button class="bc2 mbtns" style="flex:1;border:none;border-radius:8px;padding:11px;font-size:13px;cursor:pointer;background:#2a2a2a;color:#fff" onclick="CLR2()">No rider</button>
+      <button class="bok mbtns" style="flex:1;border:none;border-radius:8px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;background:#c8102e;color:#fff" onclick="CLR3()">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- EXPORT OVERLAY -->
+<div class="overlay" id="exOv">
+  <div class="exp-box">
+    <h3>📤 Race Log Export</h3>
+    <div class="exp-text" id="exText"></div>
+    <div class="exp-btns">
+      <button class="exp-copy" onclick="CPY()">📋 Copy all</button>
+      <button onclick="DLG()" style="flex:1;background:#1a1a3a;border:1px solid #4444aa;color:#aaaaff;border-radius:8px;padding:11px;font-size:13px;font-weight:700;cursor:pointer">⬇️ Download</button>
+      <button class="exp-close" onclick="CEX()">✕ Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- GC KLASSEMENT -->
+<div class="log-overlay" id="gcOv">
+  <div class="log-header" style="background:#1a002a;border-bottom:2px solid #6633aa">
+    <h2 style="color:#cc88ff">🏆 GC KLASSEMENT</h2>
+    <button onclick="CGC()" class="log-close">✕ Close</button>
+  </div>
+  <!-- CSV Upload -->
+  <div style="padding:10px 14px;border-bottom:1px solid #2a1a3a;background:#0d0015;flex-shrink:0">
+    <div style="font-size:10px;color:#8855aa;text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:7px">📂 Load standings via CSV</div>
+    <div style="font-family:monospace;font-size:11px;color:#555;margin-bottom:7px">nr,time &nbsp;→&nbsp; 16,0 &nbsp;/&nbsp; 1,+1:23 &nbsp;/&nbsp; 45,+5:40</div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <input type="file" id="gcFile" accept=".csv,.txt"
+        style="flex:1;background:#2a0a3a;border:1px solid #6633aa;color:#aaa;border-radius:8px;padding:6px;font-size:12px">
+      <button onclick="GCLC()" style="background:#6633aa;border:none;color:#fff;border-radius:8px;padding:8px 12px;font-size:13px;font-weight:700;cursor:pointer;flex-shrink:0">✅ Laad</button>
+      <button onclick="GCDT()" style="background:#2a0a3a;border:1px solid #6633aa;color:#cc88ff;border-radius:8px;padding:8px 10px;font-size:12px;cursor:pointer;flex-shrink:0">⬇️</button>
+    </div>
+    <div id="gcUpResult" style="font-size:12px;margin-top:6px;min-height:16px"></div>
+  </div>
+  <!-- Invoer manueel -->
+  <div style="padding:10px 14px;border-bottom:1px solid #2a1a3a;background:#110022;flex-shrink:0">
+    <div style="font-size:10px;color:#8855aa;text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:7px">Enter time gap</div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <input type="number" id="gcNum" placeholder="Nr." inputmode="numeric"
+        style="width:70px;background:#2a0a3a;border:1px solid #6633aa;color:#fff;border-radius:8px;padding:8px;font-size:18px;text-align:center">
+      <button onclick="GCS()" style="background:#2a0a3a;border:1px solid #6633aa;color:#cc88ff;border-radius:8px;padding:8px 10px;font-size:14px;font-weight:700;cursor:pointer">🔍</button>
+      <div id="gcNumResult" style="flex:1;font-size:12px;color:#8855aa;line-height:1.3"></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+      <div style="font-size:11px;color:#8855aa;flex-shrink:0">Gap:</div>
+      <input type="text" id="gcTime" placeholder="+1:23 of leader" inputmode="decimal"
+        style="flex:1;background:#2a0a3a;border:1px solid #6633aa;color:#fff;border-radius:8px;padding:8px;font-size:16px;text-align:center">
+      <button onclick="GCQ('0')" style="background:#2a0a3a;border:1px solid #ffdd00;color:#ffdd00;border-radius:8px;padding:8px 10px;font-size:12px;font-weight:800;cursor:pointer">👑 Leader</button>
+      <button onclick="GCOK()" style="background:#6633aa;border:none;color:#fff;border-radius:8px;padding:8px 14px;font-size:14px;font-weight:700;cursor:pointer">✅</button>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:7px">
+      <button onclick="GCQ('+0:30')" style="background:#2a0a3a;border:1px solid #6633aa;color:#cc88ff;border-radius:6px;padding:4px 8px;font-size:12px;font-weight:700;cursor:pointer">+0:30</button>
+      <button onclick="GCQ('+1:00')" style="background:#2a0a3a;border:1px solid #6633aa;color:#cc88ff;border-radius:6px;padding:4px 8px;font-size:12px;font-weight:700;cursor:pointer">+1:00</button>
+      <button onclick="GCQ('+2:00')" style="background:#2a0a3a;border:1px solid #6633aa;color:#cc88ff;border-radius:6px;padding:4px 8px;font-size:12px;font-weight:700;cursor:pointer">+2:00</button>
+      <button onclick="GCQ('+5:00')" style="background:#2a0a3a;border:1px solid #6633aa;color:#cc88ff;border-radius:6px;padding:4px 8px;font-size:12px;font-weight:700;cursor:pointer">+5:00</button>
+      <button onclick="GCQ('+10:00')" style="background:#2a0a3a;border:1px solid #6633aa;color:#cc88ff;border-radius:6px;padding:4px 8px;font-size:12px;font-weight:700;cursor:pointer">+10:00</button>
+    </div>
+  </div>
+  <!-- Filter -->
+  <div style="padding:6px 14px;border-bottom:1px solid #1a1a2a;display:flex;gap:8px;flex-shrink:0">
+    <button onclick="GCFL(0)" id="gcf0" style="background:#6633aa;border:none;color:#fff;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer">All</button>
+    <button onclick="GCFL(1)" id="gcf1" style="background:#2a0a3a;border:1px solid #6633aa;color:#cc88ff;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer">With time</button>
+    <span style="flex:1"></span>
+    <span id="gcCount" style="font-size:11px;color:#8855aa;align-self:center"></span>
+  </div>
+  <!-- Lijst -->
+  <div class="ov-list" id="gcList"></div>
+</div>
+
+<script>
+var R={1:{n:"WÆRENSKJOLD Søren",nat:"NOR",t:"Uno-X Mobility"},2:{n:"ABRAHAMSEN Jonas",nat:"NOR",t:"Uno-X Mobility"},3:{n:"BÉVORT Carl-Frederik",nat:"DEN",t:"Uno-X Mobility"},4:{n:"BYSTRØM Sven Erik",nat:"NOR",t:"Uno-X Mobility"},5:{n:"HOELGAARD Markus",nat:"NOR",t:"Uno-X Mobility"},6:{n:"RESELL Erik Nordsaeter",nat:"NOR",t:"Uno-X Mobility"},7:{n:"TILLER Rasmus",nat:"NOR",t:"Uno-X Mobility"},11:{n:"PHILIPSEN Jasper",nat:"BEL",t:"Alpecin-Premier Tech"},12:{n:"BAYER Tobias",nat:"AUT",t:"Alpecin-Premier Tech"},13:{n:"BELMANS Lennert",nat:"BEL",t:"Alpecin-Premier Tech"},14:{n:"GROVES Kaden Alexander",nat:"AUS",t:"Alpecin-Premier Tech"},15:{n:"PLANCKAERT Edward",nat:"BEL",t:"Alpecin-Premier Tech"},16:{n:"VAN DER POEL Mathieu",nat:"NED",t:"Alpecin-Premier Tech"},17:{n:"SENECHAL Florian",nat:"FRA",t:"Alpecin-Premier Tech"},21:{n:"MOHORIC Matej",nat:"SLO",t:"Bahrain Victorious"},22:{n:"GRADEK Kamil",nat:"POL",t:"Bahrain Victorious"},23:{n:"MIQUEL DELGADO Pau",nat:"ESP",t:"Bahrain Victorious"},24:{n:"SEGAERT Alec",nat:"BEL",t:"Bahrain Victorious"},25:{n:"STANNARD Robert",nat:"AUS",t:"Bahrain Victorious"},26:{n:"VALTER Attila",nat:"HUN",t:"Bahrain Victorious"},27:{n:"VAN MECHELEN Vlad",nat:"BEL",t:"Bahrain Victorious"},31:{n:"LUND ANDRESEN Lund",nat:"DEN",t:"Decathlon CMA CGM"},32:{n:"BISSEGGER Stefan",nat:"SUI",t:"Decathlon CMA CGM"},33:{n:"BOL Cees",nat:"NED",t:"Decathlon CMA CGM"},34:{n:"DE PESTEL Sander",nat:"BEL",t:"Decathlon CMA CGM"},35:{n:"DEWULF Stan",nat:"BEL",t:"Decathlon CMA CGM"},36:{n:"NAESEN Oliver",nat:"BEL",t:"Decathlon CMA CGM"},37:{n:"PEDERSEN Søjberg Rasmus",nat:"DEN",t:"Decathlon CMA CGM"},41:{n:"ASGREEN Kasper",nat:"DEN",t:"EF Education-EasyPost"},42:{n:"ALBANESE Vincenzo",nat:"ITA",t:"EF Education-EasyPost"},43:{n:"HOBBS Alfred Bruce Noah",nat:"GBR",t:"EF Education-EasyPost"},44:{n:"HONORÉ Frølich Mikkel",nat:"DEN",t:"EF Education-EasyPost"},45:{n:"LAMPERTI Luke",nat:"USA",t:"EF Education-EasyPost"},46:{n:"SIMMONS Colby",nat:"USA",t:"EF Education-EasyPost"},47:{n:"VAN DEN BERG Marijn",nat:"NED",t:"EF Education-EasyPost"},51:{n:"MADOUAS Valentin",nat:"FRA",t:"Groupama-FDJ United"},52:{n:"BARTHE Cyril",nat:"FRA",t:"Groupama-FDJ United"},53:{n:"GRUEL Thibaud",nat:"FRA",t:"Groupama-FDJ United"},54:{n:"HUENS Axel",nat:"FRA",t:"Groupama-FDJ United"},55:{n:"JACOBS Johan",nat:"SUI",t:"Groupama-FDJ United"},56:{n:"RUSSO Clément",nat:"FRA",t:"Groupama-FDJ United"},57:{n:"TRONCHON Bastien",nat:"FRA",t:"Groupama-FDJ United"},61:{n:"KWIATKOWSKI Michal",nat:"POL",t:"Ineos Grenadiers"},62:{n:"HEIDUK Kim Alexander",nat:"GER",t:"Ineos Grenadiers"},63:{n:"SHEFFIELD Magnus",nat:"USA",t:"Ineos Grenadiers"},64:{n:"SHMIDT Artem",nat:"USA",t:"Ineos Grenadiers"},65:{n:"SWIFT Ben",nat:"GBR",t:"Ineos Grenadiers"},66:{n:"TURNER Ben",nat:"GBR",t:"Ineos Grenadiers"},67:{n:"WATSON Sam",nat:"GBR",t:"Ineos Grenadiers"},71:{n:"KRAGH ANDERSEN Søren",nat:"DEN",t:"Lidl-Trek"},72:{n:"SKUJINS Toms",nat:"LAT",t:"Lidl-Trek"},73:{n:"PHILIPSEN Withen Albert",nat:"DEN",t:"Lidl-Trek"},74:{n:"TEUTENBERG Tim Torn",nat:"GER",t:"Lidl-Trek"},75:{n:"THEUNS Edward",nat:"BEL",t:"Lidl-Trek"},76:{n:"VACEK Mathias",nat:"CZE",t:"Lidl-Trek"},77:{n:"VERGAERDE Otto",nat:"BEL",t:"Lidl-Trek"},81:{n:"DE LIE Arnaud",nat:"BEL",t:"Lotto Intermarché"},82:{n:"BRAET Vito",nat:"BEL",t:"Lotto Intermarché"},83:{n:"BERCKMOES Jenno",nat:"BEL",t:"Lotto Intermarché"},84:{n:"BEULLENS Cedric",nat:"BEL",t:"Lotto Intermarché"},85:{n:"GRIGNARD Sébastien",nat:"BEL",t:"Lotto Intermarché"},86:{n:"VAN BOVEN Luca",nat:"BEL",t:"Lotto Intermarché"},87:{n:"VAN SINTMAARTENSDIJK",nat:"NED",t:"Lotto Intermarché"},91:{n:"ADRIA OLIVERAS Roger",nat:"ESP",t:"Movistar Team"},92:{n:"AULAR SANABRIA Orluis",nat:"VEN",t:"Movistar Team"},93:{n:"BARRENETXEA GOLZARRI",nat:"ESP",t:"Movistar Team"},94:{n:"CANAL BLANCO Carlos",nat:"ESP",t:"Movistar Team"},95:{n:"GARCIA CORTINA Ivan",nat:"ESP",t:"Movistar Team"},96:{n:"MACIEJUK Filip",nat:"POL",t:"Movistar Team"},97:{n:"MORO Manlio",nat:"ITA",t:"Movistar Team"},101:{n:"GIRMAY Biniam",nat:"ERI",t:"NSN Cycling Team"},102:{n:"ASKEY Lewis",nat:"GBR",t:"NSN Cycling Team"},103:{n:"BOIVIN Guillaume",nat:"CAN",t:"NSN Cycling Team"},104:{n:"LOUVEL Matis",nat:"FRA",t:"NSN Cycling Team"},105:{n:"MULLEN Ryan William",nat:"IRL",t:"NSN Cycling Team"},106:{n:"SHEEHAN Riley",nat:"USA",t:"NSN Cycling Team"},107:{n:"VAN ASBROECK Tom",nat:"BEL",t:"NSN Cycling Team"},111:{n:"MEEUS Jordi",nat:"BEL",t:"Red Bull-Bora-Hansgrohe"},112:{n:"DRIZNERS Jarrad Eriks",nat:"AUS",t:"Red Bull-Bora-Hansgrohe"},113:{n:"PITHIE Laurence",nat:"NZL",t:"Red Bull-Bora-Hansgrohe"},114:{n:"VAN DIJKE Mick",nat:"NED",t:"Red Bull-Bora-Hansgrohe"},115:{n:"VAN DIJKE Tim",nat:"NED",t:"Red Bull-Bora-Hansgrohe"},116:{n:"MARIT Arne",nat:"BEL",t:"Red Bull-Bora-Hansgrohe"},117:{n:"VERMEERSCH Gianni",nat:"BEL",t:"Red Bull-Bora-Hansgrohe"},121:{n:"LAMPAERT Yves",nat:"BEL",t:"Soudal Quick-Step"},122:{n:"MAGNIER Paul",nat:"FRA",t:"Soudal Quick-Step"},123:{n:"PEDERSEN Phillip Casper",nat:"DEN",t:"Soudal Quick-Step"},124:{n:"REINDERINK Pepijn",nat:"NED",t:"Soudal Quick-Step"},125:{n:"VERVENNE Jonathan",nat:"BEL",t:"Soudal Quick-Step"},126:{n:"VAN BAARLE Dylan",nat:"NED",t:"Soudal Quick-Step"},127:{n:"VAN GESTEL Dries",nat:"BEL",t:"Soudal Quick-Step"},131:{n:"CAPIOT Amaury",nat:"BEL",t:"Team Jayco AlUla"},132:{n:"DE BONDT Dries",nat:"BEL",t:"Team Jayco AlUla"},133:{n:"DE POOTER Dries",nat:"BEL",t:"Team Jayco AlUla"},134:{n:"DONALDSON Robert",nat:"GBR",t:"Team Jayco AlUla"},135:{n:"FOLDAGER Anders",nat:"DEN",t:"Team Jayco AlUla"},136:{n:"KRIJNSEN Jelte",nat:"NED",t:"Team Jayco AlUla"},137:{n:"O\'BRIEN Kelland",nat:"AUS",t:"Team Jayco AlUla"},141:{n:"DEGENKOLB John",nat:"GER",t:"Team Picnic PostNL"},142:{n:"DE JONG Timo",nat:"NED",t:"Team Picnic PostNL"},143:{n:"FLYNN Sean",nat:"GBR",t:"Team Picnic PostNL"},144:{n:"RENARD HAQUIN Henri",nat:"FRA",t:"Team Picnic PostNL"},145:{n:"ROOSEN Timo",nat:"NED",t:"Team Picnic PostNL"},146:{n:"VAN DEN BERG Julius",nat:"NED",t:"Team Picnic PostNL"},147:{n:"VAN DEN BROEK Frank",nat:"NED",t:"Team Picnic PostNL"},151:{n:"MATTIO Pietro",nat:"ITA",t:"Visma | Lease a Bike"},152:{n:"AFFINI Edoardo",nat:"ITA",t:"Visma | Lease a Bike"},153:{n:"BRENNAN Matthew",nat:"GBR",t:"Visma | Lease a Bike"},154:{n:"HAGENES Per Strand",nat:"NOR",t:"Visma | Lease a Bike"},155:{n:"KIELICH Timo",nat:"BEL",t:"Visma | Lease a Bike"},156:{n:"LAPORTE Christophe",nat:"FRA",t:"Visma | Lease a Bike"},157:{n:"ZINGLE Axel",nat:"FRA",t:"Visma | Lease a Bike"},161:{n:"WELLENS Tim",nat:"BEL",t:"UAE Team Emirates XRG"},162:{n:"ALVES OLIVEIRA Rui Filipe",nat:"POR",t:"UAE Team Emirates XRG"},163:{n:"JOHANSEN Julius",nat:"DEN",t:"UAE Team Emirates XRG"},164:{n:"HERREGODTS Rune",nat:"BEL",t:"UAE Team Emirates XRG"},165:{n:"MOLANO BENAVIDES Juan",nat:"COL",t:"UAE Team Emirates XRG"},166:{n:"POLITT Nils",nat:"GER",t:"UAE Team Emirates XRG"},167:{n:"VERMEERSCH Florian",nat:"BEL",t:"UAE Team Emirates XRG"},171:{n:"BALLERINI Davide",nat:"ITA",t:"XDS Astana Team"},172:{n:"BETTIOL Alberto",nat:"ITA",t:"XDS Astana Team"},173:{n:"GATE Aaron",nat:"NZL",t:"XDS Astana Team"},174:{n:"GONOV Lev",nat:"",t:"XDS Astana Team"},175:{n:"LIVYNS Arjen",nat:"BEL",t:"XDS Astana Team"},176:{n:"ROMELE Alessandro",nat:"ITA",t:"XDS Astana Team"},177:{n:"TEUNISSEN Mike",nat:"NED",t:"XDS Astana Team"},181:{n:"ALLEGAERT Piet",nat:"BEL",t:"Cofidis"},182:{n:"ANIOŁKOWSKI Stanisław",nat:"POL",t:"Cofidis"},183:{n:"BIERMANS Jenthe",nat:"BEL",t:"Cofidis"},184:{n:"KIRSCH Alex",nat:"LUX",t:"Cofidis"},185:{n:"PAGE Hugo",nat:"FRA",t:"Cofidis"},186:{n:"RENARD Alexis",nat:"FRA",t:"Cofidis"},187:{n:"TEUNS Dylan",nat:"BEL",t:"Cofidis"},191:{n:"PIDCOCK Thomas",nat:"GBR",t:"Pinarello-Q36.5"},192:{n:"DE GENDT Aime",nat:"BEL",t:"Pinarello-Q36.5"},193:{n:"FRISON Frederik",nat:"BEL",t:"Pinarello-Q36.5"},194:{n:"MAŁECKI Kamil",nat:"POL",t:"Pinarello-Q36.5"},195:{n:"MEURISSE Xandro",nat:"BEL",t:"Pinarello-Q36.5"},196:{n:"VAN MOER Brent",nat:"BEL",t:"Pinarello-Q36.5"},197:{n:"WRIGHT Alfred Brockwell",nat:"GBR",t:"Pinarello-Q36.5"},201:{n:"ALLENO Clement",nat:"FRA",t:"Burgos-BurpelletBH"},202:{n:"BOUGLAS Georgios",nat:"GRE",t:"Burgos-BurpelletBH"},203:{n:"CAVIA SANZ Daniel",nat:"ESP",t:"Burgos-BurpelletBH"},204:{n:"BURNETT Josh",nat:"NZL",t:"Burgos-BurpelletBH"},205:{n:"MAYER Henri Alexandre",nat:"MRI",t:"Burgos-BurpelletBH"},206:{n:"KMÍNEK Vojtěch",nat:"CZE",t:"Burgos-BurpelletBH"},207:{n:"MACIAS ESTRADA Cesar",nat:"MEX",t:"Burgos-BurpelletBH"},211:{n:"KÜNG Stefan",nat:"SUI",t:"Tudor Pro Cycling"},212:{n:"HALLER Marco",nat:"AUT",t:"Tudor Pro Cycling"},213:{n:"KELEMEN Petr",nat:"CZE",t:"Tudor Pro Cycling"},214:{n:"MIKUTIS Aivaras",nat:"LTU",t:"Tudor Pro Cycling"},215:{n:"MOZZATO Luca",nat:"ITA",t:"Tudor Pro Cycling"},216:{n:"PLUIMERS Rick",nat:"NED",t:"Tudor Pro Cycling"},217:{n:"TRENTIN Matteo",nat:"ITA",t:"Tudor Pro Cycling"},221:{n:"DEWEIRDT Siebe",nat:"BEL",t:"Team Flanders-Baloise"},222:{n:"LAMBRECHT Michiel",nat:"BEL",t:"Team Flanders-Baloise"},223:{n:"LANHOVE Milan",nat:"BEL",t:"Team Flanders-Baloise"},224:{n:"VERCOUILLIE Victor",nat:"BEL",t:"Team Flanders-Baloise"},225:{n:"VAN HEMELEN Vincent",nat:"BEL",t:"Team Flanders-Baloise"},226:{n:"VANDENSTORME Dylan",nat:"BEL",t:"Team Flanders-Baloise"},227:{n:"VANHOOF Ward",nat:"BEL",t:"Team Flanders-Baloise"},231:{n:"BRUNEL Alexys",nat:"FRA",t:"TotalEnergies"},232:{n:"DUJARDIN Sandy",nat:"FRA",t:"TotalEnergies"},233:{n:"GACHIGNARD Thomas",nat:"FRA",t:"TotalEnergies"},234:{n:"LEROUX Samuel",nat:"FRA",t:"TotalEnergies"},235:{n:"BONNET Thomas",nat:"FRA",t:"TotalEnergies"},236:{n:"TURGIS Anthony",nat:"FRA",t:"TotalEnergies"},237:{n:"VADIC Baptiste",nat:"FRA",t:"TotalEnergies"},241:{n:"BLOEM Joren",nat:"NED",t:"Unibet Rose Rockets"},242:{n:"FELDMANN Karsten Larsen",nat:"NOR",t:"Unibet Rose Rockets"},243:{n:"KOPECKÝ Casper Matyáš",nat:"CZE",t:"Unibet Rose Rockets"},244:{n:"KOPECKÝ Cornelius Tomas",nat:"CZE",t:"Unibet Rose Rockets"},245:{n:"KUBIŠ Lukáš",nat:"SVK",t:"Unibet Rose Rockets"},246:{n:"LARSEN Niklas",nat:"DEN",t:"Unibet Rose Rockets"},247:{n:"RASENBERG Martijn",nat:"NED",t:"Unibet Rose Rockets"}};
+
+var cur='',groups=[],dnf=[],recent=[],queue=[],egid=null,pr=null;
+
+function P(n){if(cur.length>=3)return;cur+=n;UD();LK();}
+function DEL(){cur=cur.slice(0,-1);UD();LK();}
+function CLR(){cur='';UD();document.getElementById('ra').innerHTML='<div class="no-result">Enter a bib number<br>on the keypad</div>';}
+function UD(){var e=document.getElementById('nd');e.textContent=cur||'___';e.className='num-display'+(cur?' has-num':'');}
+
+function LK(){
+  if(!cur)return;
+  var id=parseInt(cur),r=R[id],el=document.getElementById('ra');
+  if(r){
+    AR(id,r);
+    var is=dnf.indexOf(id)>=0;
+    el.innerHTML='<div class="rider-card"'+(is?' style="opacity:0.5;border-left-color:#444"':'')+'>'+
+      '<div class="r-bib">NR.'+id+(is?' 🚫 DNF':'')+'</div>'+
+      '<div class="r-name">'+r.n+'</div>'+
+      '<div class="r-nat">'+r.nat+'</div>'+
+      '<div class="r-team">'+r.t+'</div>'+
+      GCBADGE(id)+
+      '</div>'+
+      (!is?'<div class="abtns"><button class="btn btn-grp" onclick="OP('+id+')">➕ Add to group</button><button class="btn" style="background:#0a1a2a;border:1px solid #2d4a6b;color:#5daaff" onclick="QA('+id+')">📋 Queue</button><button class="btn btn-dnf" onclick="MD('+id+')">🚫 DNF</button></div>':
+           '<div class="abtns"><button class="btn btn-und" onclick="UD2('+id+')">↩ Undo DNF</button></div>');
+  } else {
+    el.innerHTML='<div class="no-result">No rider for nr.<b> '+cur+'</b></div>';
+  }
+}
+
+function AR(id,r){recent=recent.filter(function(x){return x.id!==id;});recent.unshift({id:id,ln:r.n.split(' ').pop()});if(recent.length>8)recent.pop();RR();}
+function RR(){
+  var el=document.getElementById('rr');
+  el.innerHTML=recent.map(function(r){return '<span class="rec" onclick="QL('+r.id+')">'+r.id+' '+r.ln+'</span>';}).join('');
+}
+function QL(id){cur=String(id);UD();LK();}
+
+function MD(id){
+  if(dnf.indexOf(id)<0)dnf.push(id);
+  groups.forEach(function(g){g.r=g.r.filter(function(x){return x!==id;});});
+  var r=R[id];
+  ALG('🚫 DNF', id, r?r.n:null, null, '#ff4444');
+  RG();RD();LK();
+}
+function UD2(id){dnf=dnf.filter(function(x){return x!==id;});RD();LK();}
+function RD(){
+  var s=document.getElementById('ds'),c=document.getElementById('dc');
+  if(!dnf.length){s.style.display='none';return;}
+  s.style.display='block';
+  c.innerHTML=dnf.map(function(id){var r=R[id];var ln=r?r.n.split(' ').pop():id;return '<span class="dc" onclick="QL('+id+')">'+id+' '+ln+'</span>';}).join('');
+}
+
+function AG(type,label,css){groups.push({id:Date.now(),type:type,label:label,css:css,gap:type==='peloton'?'PELOTON':'+0:00',r:[]});RG();}
+function RNM(id,v){var g=groups.find(function(x){return x.id===id;});if(g)g.label=v.toUpperCase();}
+function RFG(gid,rid){var g=groups.find(function(x){return x.id===gid;});if(g){g.r=g.r.filter(function(x){return x!==rid;});RG();}}
+function DG(id){groups=groups.filter(function(x){return x.id!==id;});RG();}
+
+function RG(){
+  var el=document.getElementById('gs');
+  if(!groups.length){el.innerHTML='<div style="color:#333;text-align:center;padding:30px 10px;font-size:12px;line-height:1.8">Tap above<br>to add a group</div>';return;}
+  el.innerHTML=groups.map(function(g){
+    var isP=g.type==='peloton',isD=g.type==='dropped';
+    var bc=isP?'gbp':isD?'gbm':'gbn';
+    var chips=g.r.map(function(id){var r=R[id];var ln=r?r.n.split(' ').pop():id;
+      return '<span class="rc" onclick="RFG('+g.id+','+id+')"><span class="cn">'+id+'</span> '+ln+' ✕</span>';
+    }).join('')||'<span class="nr">No riders</span>';
+    return '<div class="gc '+g.css+'">'+
+      '<div class="group-head">'+
+      '<input class="gni" value="'+g.label+'" onchange="RNM('+g.id+',this.value)" onblur="RNM('+g.id+',this.value)">'+
+      '<button class="bov" onclick="OOV('+g.id+')">👁 lijst</button>'+
+      '<span class="cnt">'+g.r.length+'</span>'+
+      '<button class="gap-b '+bc+'" onclick="OGM('+g.id+')">'+g.gap+'</button>'+
+      '<button class="bdg" onclick="DG('+g.id+')">✕</button>'+
+      '</div>'+
+      '<div class="group-riders">'+chips+'</div></div>';
+  }).join('');
+}
+
+function OQV(){
+  if(!queue.length)return;
+  document.getElementById('qvTitle').textContent='WACHTRIJ ('+queue.length+')';
+  document.getElementById('qvCount').textContent='Tap a rider to remove';
+  var list=document.getElementById('qvList');
+  list.innerHTML=queue.map(function(rid){
+    var r=R[rid];
+    return '<div class="ov-rider" onclick="QRM('+rid+');RQV()" style="cursor:pointer">'+
+      '<div class="ov-num" style="color:#5dff5d">'+rid+'</div>'+
+      '<div class="ov-info">'+
+        '<div class="ov-name">'+(r?r.n:'onbekend')+'</div>'+
+        '<div class="ov-team">'+(r?r.t:'')+'</div>'+
+        '<div class="ov-nat">'+(r?r.nat:'')+'</div>'+
+      '</div>'+
+      '<div style="color:#ff4444;font-size:18px;padding:0 4px">✕</div>'+
+    '</div>';
+  }).join('');
+  document.getElementById('qvOv').classList.add('show');
+}
+function RQV(){
+  if(!queue.length){CQV();return;}
+  document.getElementById('qvTitle').textContent='WACHTRIJ ('+queue.length+')';
+  var list=document.getElementById('qvList');
+  list.innerHTML=queue.map(function(rid){
+    var r=R[rid];
+    return '<div class="ov-rider" onclick="QRM('+rid+');RQV()" style="cursor:pointer">'+
+      '<div class="ov-num" style="color:#5dff5d">'+rid+'</div>'+
+      '<div class="ov-info">'+
+        '<div class="ov-name">'+(r?r.n:'onbekend')+'</div>'+
+        '<div class="ov-team">'+(r?r.t:'')+'</div>'+
+        '<div class="ov-nat">'+(r?r.nat:'')+'</div>'+
+      '</div>'+
+      '<div style="color:#ff4444;font-size:18px;padding:0 4px">✕</div>'+
+    '</div>';
+  }).join('');
+}
+function CQV(){document.getElementById('qvOv').classList.remove('show');}
+
+function QA(id){
+  if(queue.indexOf(id)<0) queue.push(id);
+  RQ(); CLR();
+}
+function QRM(id){ queue=queue.filter(function(x){return x!==id;}); RQ(); }
+function QCL(){ queue=[]; RQ(); }
+function RQ(){
+  var s=document.getElementById('qs'), c=document.getElementById('qc');
+  if(!queue.length){s.style.display='none';return;}
+  s.style.display='block';
+  c.innerHTML=queue.map(function(id){
+    var r=R[id]; var ln=r?r.n.split(' ').pop():id;
+    return '<span class="qchip" onclick="QRM('+id+')"><span class="qnum">'+id+'</span><span class="qname">'+ln+'</span> ✕</span>';
+  }).join('');
+}
+function OQP(){
+  if(!queue.length)return;
+  pr=null;
+  document.getElementById('ptitle').textContent='Queue ('+queue.length+') → group';
+  var pb=document.getElementById('pb');
+  if(!groups.length){pb.innerHTML='<div style="color:#666;text-align:center;padding:10px;font-size:12px;">Add a group first.</div>';}
+  else{pb.innerHTML=groups.map(function(g){return '<button class="ppb" onclick="QATG('+g.id+')">'+g.label+' ('+g.r.length+')</button>';}).join('');}
+  document.getElementById('pkOv').classList.add('show');
+}
+function QATG(gid){
+  var g=groups.find(function(x){return x.id===gid;});
+  if(g){
+    var names=[];
+    queue.forEach(function(rid){
+      groups.forEach(function(og){if(og.id!==gid)og.r=og.r.filter(function(x){return x!==rid;});});
+      if(g.r.indexOf(rid)<0){g.r.push(rid);var r=R[rid];if(r)names.push(rid+' '+r.n.split(' ').pop());}
+    });
+    if(names.length) ALG('👥 '+g.label, null, null, names.join(', '));
+    queue=[];
+  }
+  CPK(); RG(); RQ();
+}
+
+function OP(rid){
+  pr=rid;var r=R[rid];
+  document.getElementById('ptitle').textContent=(r?r.n.split(' ').pop():rid)+' → group';
+  var pb=document.getElementById('pb');
+  if(!groups.length){pb.innerHTML='<div style="color:#666;text-align:center;padding:10px;font-size:12px;">Add a group first.</div>';}
+  else{pb.innerHTML=groups.map(function(g){return '<button class="ppb" onclick="ATG('+g.id+')">'+g.label+' ('+g.r.length+')</button>';}).join('');}
+  document.getElementById('pkOv').classList.add('show');
+}
+function CPK(){document.getElementById('pkOv').classList.remove('show');pr=null;}
+function ATG(gid){
+  var g=groups.find(function(x){return x.id===gid;});
+  if(g&&pr!==null&&g.r.indexOf(pr)<0){
+    groups.forEach(function(og){if(og.id!==gid)og.r=og.r.filter(function(x){return x!==pr;});});
+    g.r.push(pr);
+    var r=R[pr];
+    ALG('👥 '+g.label, pr, r?r.n:null, null);
+  }
+  CPK();RG();CLR();
+}
+
+function OOV(id){
+  var g=groups.find(function(x){return x.id===id;});
+  if(!g)return;
+  var cols={'gb':'#ff6b00','gch':'#00aaff','gp':'#ffaa00','gd':'#555'};
+  var col=cols[g.css]||'#fff';
+  document.getElementById('ovTitle').textContent=g.label+(g.r.length?' ('+g.r.length+')':'');
+  document.getElementById('ovTitle').style.color=col;
+  document.getElementById('ovGap').textContent=(g.gap!=='PELOTON'&&g.gap!=='+0:00')?'Time gap: '+g.gap:'';
+  var list=document.getElementById('ovList');
+  if(!g.r.length){
+    list.innerHTML='<div style="color:#444;text-align:center;padding:30px;font-size:14px;">No riders in this group</div>';
+  } else {
+    list.innerHTML=g.r.map(function(rid){
+      var r=R[rid];
+      return '<div class="ov-rider">'+
+        '<div class="ov-num" style="color:'+col+'">'+rid+'</div>'+
+        '<div class="ov-info">'+
+          '<div class="ov-name">'+(r?r.n:'onbekend')+'</div>'+
+          '<div class="ov-team">'+(r?r.t:'')+'</div>'+
+          '<div class="ov-nat">'+(r?r.nat:'')+'</div>'+
+        '</div></div>';
+    }).join('');
+  }
+  document.getElementById('ovOv').classList.add('show');
+}
+function COV(){document.getElementById('ovOv').classList.remove('show');}
+
+// CSV DEELNEMERS
+var raceName='OMLOOP HET NIEUWSBLAD 2026';
+
+function OPT(){
+  document.getElementById('ptCurRace').textContent=raceName;
+  document.getElementById('ptCurCount').textContent=Object.keys(R).length+' riders';
+  document.getElementById('ptResult').innerHTML='';
+  document.getElementById('ptOv').classList.add('show');
+}
+function CPT(){document.getElementById('ptOv').classList.remove('show');}
+
+function DLT(){
+  var csv='nr,name,nat,team\n1,NAAM Voorname,BEL,Ploegname\n2,NAAM Voorname,NED,Ploegname\n';
+  var blob=new Blob([csv],{type:'text/csv'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='startlijst_template.csv';
+  a.click();
+}
+
+function PTL(){
+  var file=document.getElementById('ptFile').files[0];
+  var newRace=document.getElementById('ptRace').value.trim();
+  var el=document.getElementById('ptResult');
+  if(!file){el.style.color='#ff6b6b';el.textContent='⚠️ Please select a CSV file first.';return;}
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var lines=e.target.result.split('\n');
+    var newR={};
+    var count=0;
+    var errors=[];
+    lines.forEach(function(line,i){
+      line=line.trim();
+      if(!line||i===0) return;
+      var parts=line.split(',');
+      if(parts.length<4){if(line)errors.push('Lijn '+(i+1)+': too few columns');return;}
+      var nr=parseInt(parts[0]);
+      if(isNaN(nr)){errors.push('Lijn '+(i+1)+': invalid number');return;}
+      var name=parts[1].trim();
+      var nat=parts[2].trim();
+      var team=parts.slice(3).join(',').trim();
+      newR[nr]={n:name,nat:nat,t:team};
+      count++;
+    });
+    if(count===0){el.style.color='#ff6b6b';el.textContent='⚠️ No valid riders found. Check the format.';return;}
+    for(var k in R) delete R[k];
+    for(var k2 in newR) R[k2]=newR[k2];
+    if(newRace){
+      raceName=newRace;
+      document.getElementById('raceTitle').textContent=newRace;
+      try{localStorage.setItem('omloop_racename',newRace);}catch(e){}
+    }
+    try{localStorage.setItem('omloop_riders',JSON.stringify(newR));}catch(e){}
+    document.getElementById('ptCurRace').textContent=raceName;
+    document.getElementById('ptCurCount').textContent=count+' riders';
+    el.style.color='#5dff5d';
+    el.innerHTML='✅ <b>'+count+' riders</b> loaded!'+(errors.length?'<br><span style="color:#ffaa44;font-size:11px">'+errors.join('<br>')+'</span>':'');
+    if(confirm('Riders loaded! Reset groups and log for new race?')){
+      log=[];groups=[];dnf=[];raceStart=null;raceStop=null;
+      document.getElementById('startLbl').textContent='tap to start';
+      document.getElementById('startBtn').style.background='#0a3a0a';
+      document.getElementById('startBtn').style.borderColor='#5dff5d';
+      document.getElementById('startBtn').style.color='#5dff5d';
+      document.getElementById('stopBtn').style.background='#1a1a1a';
+      document.getElementById('stopBtn').style.borderColor='#444';
+      document.getElementById('stopBtn').style.color='#666';
+      document.getElementById('stopLbl').textContent='finish';
+      RG();RD();RLG();SAVE();
+    }
+  };
+  reader.readAsText(file);
+}
+
+function OGM(id){
+  egid=id;var g=groups.find(function(x){return x.id===id;});
+  document.getElementById('gtitle').textContent=g.label;
+  document.getElementById('gi').value=(g.gap==='PELOTON'||g.gap==='DROPPED')?'':g.gap;
+  document.getElementById('gapOv').classList.add('show');
+}
+function CGM(){document.getElementById('gapOv').classList.remove('show');egid=null;}
+function SG(v){document.getElementById('gi').value=v;}
+function OKG(){
+  var v=document.getElementById('gi').value.trim();
+  var g=groups.find(function(x){return x.id===egid;});
+  if(g){
+    g.gap=v||(g.type==='peloton'?'PELOTON':'DROPPED');
+    if(v) ALG('⏱ '+g.label+' → '+g.gap, null, null, null, '#5daaff');
+  }
+  CGM();RG();
+}
+
+setInterval(function(){
+  document.getElementById('clk').textContent=new Date().toLocaleTimeString('nl-BE',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+},1000);
+
+document.addEventListener('keydown',function(e){
+  if(e.target.tagName==='INPUT')return;
+  if(e.key>='0'&&e.key<='9')P(e.key);
+  else if(e.key==='Backspace')DEL();
+  else if(e.key==='Escape')CLR();
+});
+
+// LOG
+var log=[],selEvt=null,selEvtColor='#aaa',selRiderId=null,selRiderName=null;
+var raceStart=null, raceStop=null;
+
+// OPSLAAN & LADEN
+function SAVE(){
+  try{
+    localStorage.setItem('omloop_log', JSON.stringify(log));
+    localStorage.setItem('omloop_groups', JSON.stringify(groups));
+    localStorage.setItem('omloop_dnf', JSON.stringify(dnf));
+    localStorage.setItem('omloop_start', raceStart||'');
+    localStorage.setItem('omloop_stop', raceStop||'');
+    localStorage.setItem('omloop_gc', JSON.stringify(gc));
+  }catch(e){}
+}
+
+function LOAD(){
+  try{
+    var rn=localStorage.getItem('omloop_racename'); if(rn){raceName=rn;document.getElementById('raceTitle').textContent=rn;}
+    var rd=localStorage.getItem('omloop_riders'); if(rd){var nr=JSON.parse(rd);for(var k in R)delete R[k];for(var k2 in nr)R[k2]=nr[k2];}
+    var gcd=localStorage.getItem('omloop_gc'); if(gcd) gc=JSON.parse(gcd);
+    var l=localStorage.getItem('omloop_log'); if(l) log=JSON.parse(l);
+    var g=localStorage.getItem('omloop_groups'); if(g) groups=JSON.parse(g);
+    var d=localStorage.getItem('omloop_dnf'); if(d) dnf=JSON.parse(d);
+    raceStart=localStorage.getItem('omloop_start')||null;
+    raceStop=localStorage.getItem('omloop_stop')||null;
+    if(raceStart){
+      document.getElementById('startLbl').textContent=raceStart;
+      document.getElementById('startBtn').style.background='#3a0a0a';
+      document.getElementById('startBtn').style.borderColor='#ff6b6b';
+      document.getElementById('startBtn').style.color='#ff6b6b';
+      document.getElementById('stopBtn').style.background='#0a3a0a';
+      document.getElementById('stopBtn').style.borderColor='#5dff5d';
+      document.getElementById('stopBtn').style.color='#5dff5d';
+      document.getElementById('stopLbl').textContent='tap at finish';
+    }
+    if(raceStop){
+      document.getElementById('stopBtn').style.background='#2a2a00';
+      document.getElementById('stopBtn').style.borderColor='#ffaa00';
+      document.getElementById('stopBtn').style.color='#ffaa00';
+      document.getElementById('stopLbl').textContent=raceStop;
+    }
+    RG(); RD(); RLG();
+  }catch(e){}
+}
+
+function RESET(){
+  if(!confirm('Clear all data? (new race)')) return;
+  localStorage.clear();
+  log=[];groups=[];dnf=[];raceStart=null;raceStop=null;
+  document.getElementById('startLbl').textContent='tap to start';
+  document.getElementById('startBtn').style.background='#0a3a0a';
+  document.getElementById('startBtn').style.borderColor='#5dff5d';
+  document.getElementById('startBtn').style.color='#5dff5d';
+  document.getElementById('stopBtn').style.background='#1a1a1a';
+  document.getElementById('stopBtn').style.borderColor='#444';
+  document.getElementById('stopBtn').style.color='#666';
+  document.getElementById('stopLbl').textContent='finish';
+  RG(); RD(); RLG();
+}
+
+window.addEventListener('load', LOAD);
+
+function STRT(){
+  if(raceStart){
+    if(!confirm('Race already started at '+raceStart+'. Restart?')) return;
+  }
+  var now=new Date();
+  raceStart=now.toLocaleTimeString('nl-BE',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  raceStop=null;
+  document.getElementById('startLbl').textContent=raceStart;
+  document.getElementById('startBtn').style.background='#3a0a0a';
+  document.getElementById('startBtn').style.borderColor='#ff6b6b';
+  document.getElementById('startBtn').style.color='#ff6b6b';
+  document.getElementById('stopBtn').style.background='#0a3a0a';
+  document.getElementById('stopBtn').style.borderColor='#5dff5d';
+  document.getElementById('stopBtn').style.color='#5dff5d';
+  document.getElementById('stopLbl').textContent='tap at finish';
+  ALG('🏁 RACE STARTED',null,null,null,'#5dff5d');
+  SAVE();
+}
+
+function STP(){
+  if(!raceStart){alert('Race has not started yet.');return;}
+  if(raceStop){if(!confirm('Finish already registered at '+raceStop+'. Again?'))return;}
+  var now=new Date();
+  raceStop=now.toLocaleTimeString('nl-BE',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  document.getElementById('stopBtn').style.background='#2a2a00';
+  document.getElementById('stopBtn').style.borderColor='#ffaa00';
+  document.getElementById('stopBtn').style.color='#ffaa00';
+  document.getElementById('stopLbl').textContent=raceStop;
+  ALG('🏴 RACE FINISHED',null,null,null,'#ffaa00');
+  SAVE();
+}
+
+function KM(){
+  // returns km elapsed based on race start if available, else empty
+  return '';
+}
+
+function ALG(type, riderId, riderName, note, color){
+  var now=new Date();
+  var time=now.toLocaleTimeString('nl-BE',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  var col=color||'#aaaaff';
+  if(!raceStart && type!=='🏁 RACE STARTED') return;
+  log.unshift({id:Date.now(),time:time,km:'',type:type,color:col,riderId:riderId||null,riderName:riderName||null,note:note||''});
+  SAVE();
+}
+var evtColors={'🚨 Crash':'#ff6b6b','🔧 Flat tyre':'#ffaa44','⚡ Attack':'#5daaff','⚙️ Mechanical':'#dddd44','🚫 DNF':'#ff4444','📝 Note':'#aaa'};
+
+function OLG(){document.getElementById('lgOv').classList.add('show');RLG();}
+function CLG(){document.getElementById('lgOv').classList.remove('show');}
+
+function SEV(type,color){
+  selEvt=type; selEvtColor=color;
+  document.querySelectorAll('.evt-btn').forEach(function(b){b.classList.remove('sel');});
+  event.target.classList.add('sel');
+}
+
+function OLR(){
+  document.getElementById('lrNum').value='';
+  document.getElementById('lrResult').innerHTML='Enter a number';
+  document.getElementById('lrResult').style.color='#666';
+  document.getElementById('lrOv').classList.add('show');
+}
+function LRF(){
+  var id=parseInt(document.getElementById('lrNum').value);
+  var r=R[id];
+  var el=document.getElementById('lrResult');
+  if(r){
+    el.style.color='#fff';
+    el.innerHTML='<b style="font-size:18px">'+id+'</b><br>'+r.n+'<br><span style="color:#f0c040;font-size:11px">'+r.t+'</span>';
+    selRiderId=id; selRiderName=r.n;
+  } else {
+    el.style.color='#666';
+    el.innerHTML='No rider found';
+    selRiderId=null; selRiderName=null;
+  }
+}
+function CLR2(){selRiderId=null;selRiderName=null;document.getElementById('lgRiderTxt').textContent='Rider (optional)';document.getElementById('lgRiderTxt').style.color='#555';document.getElementById('lrOv').classList.remove('show');}
+function CLR3(){
+  if(selRiderId){document.getElementById('lgRiderTxt').textContent=selRiderId+' '+selRiderName;document.getElementById('lgRiderTxt').style.color='#fff';}
+  document.getElementById('lrOv').classList.remove('show');
+}
+
+function LGS(){
+  var id=parseInt(document.getElementById('lgRiderNum').value);
+  var r=R[id];
+  var el=document.getElementById('lgRiderResult');
+  if(r){
+    selRiderId=id; selRiderName=r.n;
+    el.style.color='#f0c040';
+    el.textContent='✓ '+id+' '+r.n+' ('+r.t+')';
+  } else {
+    selRiderId=null; selRiderName=null;
+    el.style.color='#ff6b6b';
+    el.textContent=document.getElementById('lgRiderNum').value?'No rider found':'';
+  }
+}
+
+function SAV(){
+  if(!raceStart){alert('Start eerst de koers met de 🏁 START knop.');return;}
+  if(!selEvt){alert('Kies eerst een type event');return;}
+  var km=document.getElementById('lgKm').value;
+  var note=document.getElementById('lgNote').value.trim();
+  var now=new Date();
+  var time=now.toLocaleTimeString('nl-BE',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  log.unshift({id:Date.now(),time:time,km:km?'km '+km:'',type:selEvt,color:selEvtColor,riderId:selRiderId,riderName:selRiderName,note:note});
+  document.getElementById('lgKm').value='';
+  document.getElementById('lgNote').value='';
+  document.getElementById('lgRiderNum').value='';
+  document.getElementById('lgRiderResult').textContent='';
+  selEvt=null;selEvtColor='#aaa';selRiderId=null;selRiderName=null;
+  document.querySelectorAll('.evt-btn').forEach(function(b){b.classList.remove('sel');});
+  RLG(); SAVE();
+}
+
+function LDEL(id){log=log.filter(function(x){return x.id!==id;});RLG();SAVE();}
+
+function RLG(){
+  var el=document.getElementById('lgList');
+  if(!log.length){el.innerHTML='<div class="log-empty">No events logged yet</div>';return;}
+  el.innerHTML=log.map(function(e){
+    return '<div class="log-entry" style="border-left-color:'+e.color+'">'+
+      '<div class="le-time">'+e.time+'</div>'+
+      (e.km?'<div class="le-km">'+e.km+'</div>':'')+
+      '<div class="le-body">'+
+        '<div class="le-type" style="color:'+e.color+'">'+e.type+'</div>'+
+        (e.riderId?'<div class="le-rider">'+e.riderId+' '+e.riderName+'</div>':'')+
+        (e.note?'<div class="le-note">'+e.note+'</div>':'')+
+      '</div>'+
+      '<button class="le-del" onclick="LDEL('+e.id+')">🗑</button>'+
+    '</div>';
+  }).join('');
+}
+
+function OEX(){
+  var txt='RACE LOG - \n';
+  txt+='Generated: '+new Date().toLocaleString('en-GB')+'\n';
+  if(raceStart) txt+='Race started: '+raceStart+'\n';
+  if(raceStop) txt+='Finish: '+raceStop+'\n';
+  txt+='==========================================\n\n';
+  if(!log.length){txt+='No events logged.';}
+  else{
+    var sorted=log.slice().reverse();
+    sorted.forEach(function(e){
+      txt+=e.time+(e.km?' | '+e.km:'')+'\n';
+      txt+=e.type+(e.riderId?' | '+e.riderId+' '+e.riderName:'')+'\n';
+      if(e.note)txt+='→ '+e.note+'\n';
+      txt+='\n';
+    });
+  }
+  document.getElementById('exText').textContent=txt;
+  document.getElementById('exOv').classList.add('show');
+}
+function CEX(){document.getElementById('exOv').classList.remove('show');}
+function DLG(){
+  var txt=document.getElementById('exText').textContent;
+  var date=new Date().toISOString().slice(0,10);
+  var fname=raceName.replace(/[^a-z0-9]/gi,'_')+'_'+date+'.txt';
+  var blob=new Blob([txt],{type:'text/plain'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=fname;
+  a.click();
+}
+function CPY(){
+  var txt=document.getElementById('exText').textContent;
+  if(navigator.clipboard){navigator.clipboard.writeText(txt).then(function(){alert('Gekopieerd!');});}
+  else{var t=document.createElement('textarea');t.value=txt;document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t);alert('Gekopieerd!');}
+}
+
+// GC KLASSEMENT
+var gc={}, gcFilter=0, gcSelId=null;
+
+function GCDT(){
+  var csv='nr,time\n1,0\n16,+1:23\n45,+5:40\n101,+12:00\n';
+  var blob=new Blob([csv],{type:'text/csv'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='gc_template.csv';
+  a.click();
+}
+
+function GCLC(){
+  var file=document.getElementById('gcFile').files[0];
+  var el=document.getElementById('gcUpResult');
+  if(!file){el.style.color='#ff6b6b';el.textContent='⚠️ Please select a CSV file first.';return;}
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var lines=e.target.result.split('\n');
+    var newGc={};
+    var count=0, errors=[];
+    lines.forEach(function(line,i){
+      line=line.trim();
+      if(!line||i===0) return;
+      var parts=line.split(',');
+      if(parts.length<2){if(line)errors.push('Lijn '+(i+1)+': formaat fout');return;}
+      var nr=parseInt(parts[0]);
+      if(isNaN(nr)){errors.push('Lijn '+(i+1)+': invalid number');return;}
+      var tijd=parts[1].trim();
+      // normalize
+      if(tijd==='0'||tijd.toLowerCase()==='leader'){newGc[nr]='0';}
+      else{newGc[nr]=tijd.startsWith('+')?tijd:'+'+tijd;}
+      count++;
+    });
+    if(count===0){el.style.color='#ff6b6b';el.textContent='⚠️ No valid data found.';return;}
+    gc=newGc;
+    try{localStorage.setItem('omloop_gc',JSON.stringify(gc));}catch(e){}
+    el.style.color='#5dff5d';
+    el.innerHTML='✅ <b>'+count+' riders</b> loaded!'+(errors.length?'<br><span style="color:#ffaa44;font-size:11px">'+errors.slice(0,3).join('<br>')+'</span>':'');
+    RGC();
+  };
+  reader.readAsText(file);
+}
+
+function OGC(){
+  document.getElementById('gcNumResult').textContent='';
+  document.getElementById('gcNum').value='';
+  document.getElementById('gcTime').value='';
+  gcSelId=null;
+  RGC();
+  document.getElementById('gcOv').classList.add('show');
+}
+function CGC(){document.getElementById('gcOv').classList.remove('show');}
+
+function GCS(){
+  var id=parseInt(document.getElementById('gcNum').value);
+  var r=R[id];
+  var el=document.getElementById('gcNumResult');
+  if(r){
+    gcSelId=id;
+    el.style.color='#cc88ff';
+    el.innerHTML='<b>'+id+'</b> '+r.n+'<br><span style="color:#f0c040;font-size:10px">'+r.t+'</span>';
+    // prefill existing time if any
+    if(gc[id]) document.getElementById('gcTime').value=gc[id]==='0'?'Leader':gc[id];
+  } else {
+    gcSelId=null;
+    el.style.color='#ff6b6b';
+    el.textContent=document.getElementById('gcNum').value?'No rider found':'';
+  }
+}
+
+function GCQ(v){
+  document.getElementById('gcTime').value=v==='0'?'Leader':v;
+}
+
+function GCOK(){
+  if(!gcSelId){alert('Search for a rider first using 🔍');return;}
+  var t=document.getElementById('gcTime').value.trim();
+  if(!t){delete gc[gcSelId];}
+  else{
+    // normalize: leader = '0', anders ensure + prefix
+    if(t.toLowerCase()==='leader'||t==='0'){gc[gcSelId]='0';}
+    else{gc[gcSelId]=t.startsWith('+')?t:'+'+t;}
+  }
+  try{localStorage.setItem('omloop_gc',JSON.stringify(gc));}catch(e){}
+  document.getElementById('gcNum').value='';
+  document.getElementById('gcTime').value='';
+  document.getElementById('gcNumResult').textContent='';
+  gcSelId=null;
+  RGC();
+}
+
+function GCFL(f){
+  gcFilter=f;
+  document.getElementById('gcf0').style.background=f===0?'#6633aa':'#2a0a3a';
+  document.getElementById('gcf0').style.border=f===0?'none':'1px solid #6633aa';
+  document.getElementById('gcf1').style.background=f===1?'#6633aa':'#2a0a3a';
+  document.getElementById('gcf1').style.border=f===1?'none':'1px solid #6633aa';
+  RGC();
+}
+
+function GCTS(t){
+  // convert time string to seconds for sorting
+  if(t==='0') return 0;
+  var m=t.replace('+','').split(':');
+  return parseInt(m[0])*60+(parseInt(m[1])||0);
+}
+
+function RGC(){
+  var el=document.getElementById('gcList');
+  // Build sorted list
+  var entries=[];
+  if(gcFilter===0){
+    // all riders, those with gc time first sorted, then rest
+    var withTime=Object.keys(gc).map(function(id){return {id:parseInt(id),t:gc[id]};});
+    withTime.sort(function(a,b){return GCTS(a.t)-GCTS(b.t);});
+    entries=withTime;
+  } else {
+    var withTime2=Object.keys(gc).map(function(id){return {id:parseInt(id),t:gc[id]};});
+    withTime2.sort(function(a,b){return GCTS(a.t)-GCTS(b.t);});
+    entries=withTime2;
+  }
+  document.getElementById('gcCount').textContent=Object.keys(gc).length+' riders with time';
+  if(!entries.length){
+    el.innerHTML='<div style="color:#444;text-align:center;padding:30px;font-size:14px;">No times entered yet.<br><br>Search a rider and enter their time gap.</div>';
+    return;
+  }
+  el.innerHTML=entries.map(function(e,i){
+    var r=R[e.id];
+    var pos=i+1;
+    var isLeader=e.t==='0';
+    var posClass=isLeader?'leader':pos<=10?'top10':'rest';
+    var timeStr=isLeader?'👑 Leader':e.t;
+    var timeClass=isLeader?'leader':'';
+    return '<div class="gc-entry">'+
+      '<div class="gc-pos '+posClass+'">'+pos+'</div>'+
+      '<div class="gc-info">'+
+        '<div class="gc-name">'+(r?r.n:'#'+e.id)+'</div>'+
+        '<div class="gc-team-sm">'+(r?r.t:'')+'</div>'+
+      '</div>'+
+      '<div class="gc-time '+timeClass+'">'+timeStr+'</div>'+
+      '<button class="gc-edit-btn" onclick="GCED('+e.id+')">✏️</button>'+
+    '</div>';
+  }).join('');
+}
+
+function GCED(id){
+  // prefill form for editing
+  document.getElementById('gcNum').value=id;
+  GCS();
+  document.getElementById('gcTime').value=gc[id]==='0'?'Leader':gc[id]||'';
+}
+
+// Show GC in rider lookup
+function GCBADGE(id){
+  if(!gc[id]) return '';
+  var t=gc[id];
+  // find position
+  var entries=Object.keys(gc).map(function(k){return {id:parseInt(k),t:gc[k]};});
+  entries.sort(function(a,b){return GCTS(a.t)-GCTS(b.t);});
+  var pos=entries.findIndex(function(e){return e.id===id;})+1;
+  var isLeader=t==='0';
+  return '<div class="gc-badge">'+(isLeader?'👑 Leader':'GC #'+pos+' | '+t)+'</div>';
+}
+</script>
+</body>
+</html>
