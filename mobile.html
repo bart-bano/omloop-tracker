@@ -920,5 +920,56 @@ function INIT(){LOAD();RG();RD();RQ();RLG();};
     <div id="rp-list"><div class="rp-loading">Loading races...</div></div>
   </div>
 </div>
+
+<script>
+var ghUser = 'bart-bano';
+var ghRepo = 'omloop-tracker';
+
+async function loadRacePicker() {
+  var el = document.getElementById('rp-list');
+  try {
+    var yr = new Date().getFullYear();
+    var url = 'https://raw.githubusercontent.com/' + ghUser + '/' + ghRepo + '/main/races/index.json';
+    var resp = await fetch(url, {cache:'no-store'});
+    if (!resp.ok) throw new Error('races/index.json not found ('+resp.status+')');
+    var races = await resp.json();
+    var current = races.filter(function(r){ return r.year === yr && r.active; });
+    if (!current.length) {
+      el.innerHTML = '<div class="rp-err">No active races for '+yr+'.<br><br><button onclick="loadRacePicker()" style="background:#1e1e1e;border:1px solid #333;color:#aaa;border-radius:8px;padding:8px 14px;cursor:pointer;margin-top:8px;">Retry</button></div>';
+      return;
+    }
+    el.innerHTML = current.map(function(r) {
+      var sb = r.type==='stage' ? '<span class="rp-badge rp-stage">Stage '+r.stage+'</span>' : '';
+      return '<div class="rp-item" onclick="pickRace(''+r.id+'',''+r.name+'')">' +
+        '<div class="rp-item-name">'+r.name+'<span class="rp-badge rp-active">Active</span>'+sb+'</div>' +
+        '<div class="rp-item-meta">'+(r.type==='oneday'?'One day race':'Stage race')+'</div>' +
+        '</div>';
+    }).join('');
+  } catch(e) {
+    el.innerHTML = '<div class="rp-err">'+e.message+'<br><br><button onclick="loadRacePicker()" style="background:#1e1e1e;border:1px solid #333;color:#aaa;border-radius:8px;padding:8px 14px;cursor:pointer;margin-top:8px;">Retry</button></div>';
+  }
+}
+
+async function pickRace(id, name) {
+  var el = document.getElementById('rp-list');
+  el.innerHTML = '<div class="rp-loading">Loading '+name+'...</div>';
+  try {
+    var url = 'https://raw.githubusercontent.com/' + ghUser + '/' + ghRepo + '/main/races/' + id + '/data.js';
+    var resp = await fetch(url, {cache:'no-store'});
+    if (!resp.ok) throw new Error('Race data not found. Upload a startlist via the admin first.');
+    var code = await resp.text();
+    var sc = document.createElement('script');
+    sc.textContent = code;
+    document.head.appendChild(sc);
+    document.getElementById('racePicker').classList.remove('show');
+    LOAD(); RG(); RD(); RQ(); RLG();
+  } catch(e) {
+    el.innerHTML = '<div class="rp-err">'+e.message+'<br><br><button onclick="loadRacePicker()" style="background:#1e1e1e;border:1px solid #333;color:#aaa;border-radius:8px;padding:8px 14px;cursor:pointer;margin-top:8px;">Back</button></div>';
+  }
+}
+
+loadRacePicker();
+</script>
+
 </body>
 </html>
