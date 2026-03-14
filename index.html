@@ -423,7 +423,20 @@ body { font-family: -apple-system, sans-serif; background: #0a0a0a; color: #fff;
   <div class="ov-list" id="gcList"></div>
 </div>
 
-<script src="data.js"></script>
+<script>
+fetch('data.js', {cache: 'no-store'})
+  .then(function(r){return r.text();})
+  .then(function(code){
+    var s=document.createElement('script');
+    s.textContent=code;
+    document.head.appendChild(s);
+    LOAD();RG();RD();RLG();TK();
+  })
+  .catch(function(){
+    // fallback if fetch fails (e.g. local file)
+    LOAD();RG();RD();RLG();TK();
+  });
+</script>
 <script>
 
 var cur='',groups=[],dnf=[],recent=[],queue=[],egid=null,pr=null;
@@ -794,7 +807,6 @@ function RESET(){
   RG(); RD(); RLG();
 }
 
-window.addEventListener('load', LOAD);
 
 function STRT(){
   if(raceStart){
