@@ -179,19 +179,26 @@ async function ghGetText(path){
   if(!d)return null;
   return decodeURIComponent(escape(atob(d.content.replace(/\n/g,''))));
 }
-async function saveIndex(sha){
+async function saveIndex(){
   var idxFile=await ghGet('races/index.json');
   await ghPut('races/index.json',JSON.stringify(races,null,2),idxFile?idxFile.sha:null,'Update races index');
 }
 async function loadRaces(){
   var el=document.getElementById('race-list');
+  var g=getGH();
+  if(!g.token||!g.user||!g.repo){
+    el.innerHTML='<div style="color:#ffaa44;font-size:13px;">Fill in GitHub settings first, then click Refresh.</div>';
+    return;
+  }
   el.innerHTML='<div style="color:#444;font-size:13px;padding:8px 0;">Loading...</div>';
   try{
     var txt=await ghGetText('races/index.json');
     races=txt?JSON.parse(txt):[];
     renderRaces();
   }catch(e){
-    el.innerHTML='<div style="color:#ff4444;font-size:13px;">Check GitHub settings.</div>';
+    // File doesn't exist yet — that's OK, start fresh
+    races=[];
+    renderRaces();
   }
 }
 function renderRaces(){
@@ -353,7 +360,8 @@ async function publish(){
 }
 
 loadSettings();
-loadRaces();
+// Only load races if settings already saved
+if(getGH().token&&getGH().user&&getGH().repo){loadRaces();}else{document.getElementById("race-list").innerHTML='<div style="color:#ffaa44;font-size:13px;">Fill in GitHub settings and click Save settings, then Refresh.\</div>';}
 </script>
 </body>
 </html>
