@@ -163,6 +163,21 @@ body { font-family: -apple-system, sans-serif; background: #0a0a0a; color: #fff;
 .gc-time { font-size: 16px; font-weight: 800; font-family: monospace; color: #cc88ff; min-width: 60px; text-align: right; }
 .gc-time.leader { color: #ffdd00; }
 .gc-edit-btn { background: #1a002a; border: 1px solid #6633aa; color: #cc88ff; border-radius: 6px; padding: 4px 8px; font-size: 11px; cursor: pointer; flex-shrink: 0; }
+
+.race-picker{display:none;position:fixed;inset:0;background:#0a0a0a;z-index:9999;flex-direction:column;align-items:center;justify-content:center;padding:20px;}
+.race-picker.show{display:flex;}
+.rp-box{width:100%;max-width:420px;}
+.rp-title{font-size:22px;font-weight:800;margin-bottom:4px;}
+.rp-sub{font-size:12px;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:24px;}
+.rp-item{background:#1a1a1a;border:1px solid #252525;border-radius:12px;padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:border-color 0.15s;}
+.rp-item:hover{border-color:#c8102e;}
+.rp-item-name{font-size:16px;font-weight:800;}
+.rp-item-meta{font-size:11px;color:#555;margin-top:3px;}
+.rp-badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:6px;vertical-align:middle;}
+.rp-active{background:#0a2a0a;color:#5dff5d;border:1px solid #2d6b2d;}
+.rp-stage{background:#1a001a;color:#cc88ff;border:1px solid #6633aa;}
+.rp-loading{color:#444;font-size:14px;text-align:center;padding:30px;}
+.rp-err{color:#ff4444;font-size:13px;text-align:center;padding:20px;}
 </style>
 </head>
 <body>
@@ -175,6 +190,7 @@ body { font-family: -apple-system, sans-serif; background: #0a0a0a; color: #fff;
     <button onclick="OPT()" style="background:#1a1a2a;border:1px solid #666;color:#aaa;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;cursor:pointer">👥 CSV</button>
     <button onclick="OLG()" style="background:#1a1a3a;border:1px solid #4444aa;color:#aaaaff;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;cursor:pointer">📓 LOG</button>
     <div class="clock" id="clk">--:--:--</div>
+    <a href="admin.html" style="color:#444;font-size:16px;text-decoration:none;padding:4px 6px;border-radius:6px;" title="Admin">⚙️</a>
   </div>
 </div>
 <div class="main">
@@ -424,18 +440,7 @@ body { font-family: -apple-system, sans-serif; background: #0a0a0a; color: #fff;
 </div>
 
 <script>
-fetch('data.js', {cache: 'no-store'})
-  .then(function(r){return r.text();})
-  .then(function(code){
-    var s=document.createElement('script');
-    s.textContent=code;
-    document.head.appendChild(s);
-    LOAD();RG();RD();RLG();TK();
-  })
-  .catch(function(){
-    // fallback if fetch fails (e.g. local file)
-    LOAD();RG();RD();RLG();TK();
-  });
+/* data.js loaded via race picker */
 </script>
 <script>
 
@@ -1159,5 +1164,13 @@ function GCBADGE(id){
   return '<div class="gc-badge">'+(isLeader?'👑 Leader':'GC #'+pos+' | '+t)+'</div>';
 }
 </script>
+
+<div class="race-picker show" id="racePicker">
+  <div class="rp-box">
+    <div class="rp-title">📡 Tour Signal</div>
+    <div class="rp-sub">Select race</div>
+    <div id="rp-list"><div class="rp-loading">Loading races...</div></div>
+  </div>
+</div>
 </body>
 </html>

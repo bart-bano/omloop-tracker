@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en" translate="no">
+<head>
+<meta charset="UTF-8">
+<meta name="google" content="notranslate">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tour Signal — Admin</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,sans-serif;background:#0a0a0a;color:#fff;min-height:100vh;padding:20px;}
+.wrap{max-width:580px;margin:0 auto;}
+h1{font-size:20px;font-weight:800;margin-bottom:2px;}
+.sub{font-size:11px;color:#444;text-transform:uppercase;letter-spacing:1px;margin-bottom:24px;}
+.card{background:#141414;border:1px solid #222;border-radius:12px;padding:18px;margin-bottom:12px;}
+.card-title{font-size:11px;color:#555;text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:12px;}
+.lbl{font-size:12px;color:#888;display:block;margin-bottom:4px;}
+input[type=text],input[type=password],input[type=number],select{width:100%;background:#1e1e1e;border:1px solid #333;color:#fff;border-radius:8px;padding:10px 12px;font-size:14px;margin-bottom:10px;outline:none;-webkit-appearance:none;}
+input:focus,select:focus{border-color:#555;}
+select option{background:#1e1e1e;}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.drop-zone{border:1.5px dashed #333;border-radius:8px;padding:16px;text-align:center;cursor:pointer;font-size:12px;color:#555;transition:border-color 0.15s;display:block;}
+.drop-zone:hover{border-color:#666;}
+.drop-zone.has-file{border-color:#2d6b2d;color:#5dff5d;}
+.btn{width:100%;background:#c8102e;color:#fff;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;}
+.btn:hover{background:#a00d25;}
+.btn:disabled{background:#2a2a2a;color:#555;cursor:not-allowed;}
+.btn-sm{background:#1e1e1e;border:1px solid #333;color:#aaa;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;width:100%;}
+.btn-sm:hover{border-color:#555;color:#fff;}
+.btn-grn{background:#0a2a0a;border:1px solid #2d6b2d;color:#5dff5d;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;}
+.race-item{background:#1a1a1a;border:1px solid #252525;border-radius:10px;padding:12px 14px;margin-bottom:8px;cursor:pointer;}
+.race-item:hover{border-color:#444;}
+.race-item.sel{border-color:#c8102e;background:#1e0a0a;}
+.race-name{font-size:15px;font-weight:700;}
+.race-meta{font-size:11px;color:#555;margin-top:3px;}
+.badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:6px;vertical-align:middle;}
+.b-active{background:#0a2a0a;color:#5dff5d;border:1px solid #2d6b2d;}
+.b-stage{background:#1a001a;color:#cc88ff;border:1px solid #6633aa;}
+.b-old{background:#1a1a1a;color:#555;border:1px solid #333;}
+.log{background:#0d0d0d;border:1px solid #1a1a1a;border-radius:8px;padding:12px;font-size:12px;font-family:monospace;white-space:pre-line;margin-top:12px;display:none;min-height:48px;}
+.log.show{display:block;}
+.ok{color:#5dff5d;}.err{color:#ff4444;}.info{color:#aaaaff;}
+.saved{font-size:12px;color:#5dff5d;min-height:18px;margin-top:6px;text-align:center;}
+hr{border:none;border-top:1px solid #222;margin:14px 0;}
+.nrf{display:none;}
+.nrf.show{display:block;}
+.sec-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>📡 Tour Signal</h1>
+  <div class="sub">Admin</div>
+
+  <!-- GitHub -->
+  <div class="card">
+    <div class="card-title">GitHub settings</div>
+    <label class="lbl">Personal access token</label>
+    <input type="password" id="gh-token" placeholder="ghp_xxxxxxxxxxxx">
+    <div class="row2">
+      <div><label class="lbl">GitHub username</label><input type="text" id="gh-user" placeholder="bart-bano"></div>
+      <div><label class="lbl">Repository</label><input type="text" id="gh-repo" placeholder="omloop-tracker"></div>
+    </div>
+    <button class="btn-sm" onclick="saveSettings()">Save settings</button>
+    <div class="saved" id="saved-msg"></div>
+  </div>
+
+  <!-- Races -->
+  <div class="card">
+    <div class="sec-hd">
+      <div class="card-title" style="margin-bottom:0">Races</div>
+      <button class="btn-grn" onclick="toggleNRF()">+ New race</button>
+    </div>
+
+    <div class="nrf" id="nrf">
+      <hr>
+      <label class="lbl">Race name</label>
+      <input type="text" id="new-name" placeholder="e.g. Paris-Nice 2026">
+      <div class="row2">
+        <div><label class="lbl">Year</label><input type="number" id="new-year" placeholder="2026" min="2020" max="2035"></div>
+        <div><label class="lbl">Type</label>
+          <select id="new-type"><option value="stage">Stage race</option><option value="oneday">One day</option></select>
+        </div>
+      </div>
+      <button class="btn-sm" onclick="createRace()">Create race</button>
+      <hr>
+    </div>
+
+    <div id="race-list"><div style="color:#444;font-size:13px;padding:8px 0;">Loading...</div></div>
+    <button class="btn-sm" onclick="loadRaces()" style="margin-top:8px;font-size:12px;">↻ Refresh list</button>
+  </div>
+
+  <!-- Upload -->
+  <div class="card" id="upload-card" style="display:none;">
+    <div class="card-title" id="upload-title">Upload</div>
+    <div id="stage-row" style="display:none;margin-bottom:4px;">
+      <label class="lbl">Stage number</label>
+      <input type="number" id="stage-nr" placeholder="e.g. 6" min="1" max="30" style="margin-bottom:0;">
+    </div>
+    <div class="row2" style="margin:10px 0;">
+      <div>
+        <label class="lbl">Startlist PDF <span style="color:#333;">(optional)</span></label>
+        <label class="drop-zone" id="sl-zone" for="sl-file">
+          <span id="sl-name">Tap to select</span>
+          <input type="file" accept=".pdf" id="sl-file" style="display:none;" onchange="fileChosen('sl')">
+        </label>
+      </div>
+      <div>
+        <label class="lbl">GC standings PDF <span style="color:#333;">(optional)</span></label>
+        <label class="drop-zone" id="gc-zone" for="gc-file">
+          <span id="gc-name">Tap to select</span>
+          <input type="file" accept=".pdf" id="gc-file" style="display:none;" onchange="fileChosen('gc')">
+        </label>
+      </div>
+    </div>
+    <button class="btn" id="pub-btn" onclick="publish()">🚀 Publish to GitHub</button>
+    <div class="log" id="log"></div>
+  </div>
+</div>
+
+<script>
+var SKEY='ts_admin_v3';
+var races=[];
+var sel=null;
+
+function saveSettings(){
+  localStorage.setItem(SKEY,JSON.stringify({
+    token:document.getElementById('gh-token').value.trim(),
+    user:document.getElementById('gh-user').value.trim(),
+    repo:document.getElementById('gh-repo').value.trim()
+  }));
+  var m=document.getElementById('saved-msg');
+  m.textContent='✓ Saved';
+  setTimeout(function(){m.textContent='';},2000);
+}
+function loadSettings(){
+  try{
+    var s=JSON.parse(localStorage.getItem(SKEY)||'{}');
+    if(s.token)document.getElementById('gh-token').value=s.token;
+    if(s.user)document.getElementById('gh-user').value=s.user;
+    if(s.repo)document.getElementById('gh-repo').value=s.repo;
+  }catch(e){}
+}
+function getGH(){
+  return{token:document.getElementById('gh-token').value.trim(),user:document.getElementById('gh-user').value.trim(),repo:document.getElementById('gh-repo').value.trim()};
+}
+function logClear(){var e=document.getElementById('log');e.className='log show';e.innerHTML='';}
+function logLine(msg,cls){var e=document.getElementById('log');e.className='log show';e.innerHTML+='<span class="'+(cls||'')+'">'+msg+'</span>\n';}
+function fileChosen(t){
+  var f=document.getElementById(t+'-file').files[0];
+  if(!f)return;
+  document.getElementById(t+'-name').textContent=f.name;
+  document.getElementById(t+'-zone').classList.add('has-file');
+}
+function toggleNRF(){
+  var f=document.getElementById('nrf');
+  f.classList.toggle('show');
+  if(f.classList.contains('show'))document.getElementById('new-year').value=new Date().getFullYear();
+}
+function toB64(file){
+  return new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res(r.result.split(',')[1]);};r.onerror=rej;r.readAsDataURL(file);});
+}
+async function ghGet(path){
+  var g=getGH();
+  var r=await fetch('https://api.github.com/repos/'+g.user+'/'+g.repo+'/contents/'+path,{headers:{'Authorization':'token '+g.token,'Accept':'application/vnd.github.v3+json'}});
+  if(!r.ok)return null;
+  return r.json();
+}
+async function ghPut(path,content,sha,msg){
+  var g=getGH();
+  var body={message:msg||'Tour Signal update',content:btoa(unescape(encodeURIComponent(content)))};
+  if(sha)body.sha=sha;
+  var r=await fetch('https://api.github.com/repos/'+g.user+'/'+g.repo+'/contents/'+path,{method:'PUT',headers:{'Authorization':'token '+g.token,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'},body:JSON.stringify(body)});
+  var d=await r.json();
+  if(!r.ok)throw new Error(d.message||'GitHub error');
+  return d;
+}
+async function ghGetText(path){
+  var d=await ghGet(path);
+  if(!d)return null;
+  return decodeURIComponent(escape(atob(d.content.replace(/\n/g,''))));
+}
+async function saveIndex(sha){
+  var idxFile=await ghGet('races/index.json');
+  await ghPut('races/index.json',JSON.stringify(races,null,2),idxFile?idxFile.sha:null,'Update races index');
+}
+async function loadRaces(){
+  var el=document.getElementById('race-list');
+  el.innerHTML='<div style="color:#444;font-size:13px;padding:8px 0;">Loading...</div>';
+  try{
+    var txt=await ghGetText('races/index.json');
+    races=txt?JSON.parse(txt):[];
+    renderRaces();
+  }catch(e){
+    el.innerHTML='<div style="color:#ff4444;font-size:13px;">Check GitHub settings.</div>';
+  }
+}
+function renderRaces(){
+  var el=document.getElementById('race-list');
+  if(!races.length){el.innerHTML='<div style="color:#444;font-size:13px;padding:8px 0;">No races yet.</div>';return;}
+  var yr=new Date().getFullYear();
+  var cur=races.filter(function(r){return r.year===yr;});
+  var old=races.filter(function(r){return r.year!==yr;});
+  var html='';
+  cur.forEach(function(r){html+=raceHTML(r);});
+  if(old.length){
+    html+='<div style="font-size:11px;color:#333;text-transform:uppercase;letter-spacing:1px;margin:10px 0 6px;">Previous years</div>';
+    old.forEach(function(r){html+=raceHTML(r);});
+  }
+  el.innerHTML=html;
+}
+function raceHTML(r){
+  var s=sel&&sel.id===r.id?' sel':'';
+  var yr=new Date().getFullYear();
+  var ageBadge=r.year<yr?'<span class="badge b-old">'+r.year+'</span>':'';
+  var stageBadge=r.type==='stage'?'<span class="badge b-stage">Stage '+r.stage+'</span>':'';
+  var actBadge=r.active&&r.year===yr?'<span class="badge b-active">Active</span>':'';
+  return '<div class="race-item'+s+'" onclick="selectRace(\''+r.id+'\')">'+
+    '<div class="race-name">'+r.name+actBadge+ageBadge+stageBadge+'</div>'+
+    '<div class="race-meta">'+(r.type==='oneday'?'One day race':'Stage race')+'</div>'+
+    '</div>';
+}
+function selectRace(id){
+  sel=races.find(function(r){return r.id===id;})||null;
+  renderRaces();
+  var card=document.getElementById('upload-card');
+  if(sel){
+    card.style.display='block';
+    document.getElementById('upload-title').textContent='Upload for: '+sel.name;
+    var sr=document.getElementById('stage-row');
+    sr.style.display=sel.type==='stage'?'block':'none';
+    if(sel.type==='stage')document.getElementById('stage-nr').value=(sel.stage||0)+1;
+  }else{
+    card.style.display='none';
+  }
+}
+async function createRace(){
+  var name=document.getElementById('new-name').value.trim();
+  var year=parseInt(document.getElementById('new-year').value)||new Date().getFullYear();
+  var type=document.getElementById('new-type').value;
+  if(!name){alert('Enter a race name.');return;}
+  var id=name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'-'+year;
+  if(races.find(function(r){return r.id===id;})){alert('Race already exists.');return;}
+  var newRace={id:id,name:name.toUpperCase(),year:year,type:type,stage:0,active:true};
+  races.push(newRace);
+  try{
+    await saveIndex();
+    renderRaces();
+    toggleNRF();
+    selectRace(id);
+    document.getElementById('new-name').value='';
+  }catch(e){races.pop();alert('Error: '+e.message);}
+}
+async function callClaude(content,system){
+  var r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:4000,system:system,messages:[{role:'user',content:content}]})});
+  var d=await r.json();
+  if(d.error)throw new Error(d.error.message);
+  return d.content[0].text;
+}
+function norm(s){return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z ]/g,' ').replace(/\s+/g,' ').trim();}
+async function publish(){
+  if(!sel){alert('Select a race first.');return;}
+  var g=getGH();
+  if(!g.token||!g.user||!g.repo){logClear();logLine('Fill in GitHub settings first.','err');return;}
+  var slFile=document.getElementById('sl-file').files[0];
+  var gcFile=document.getElementById('gc-file').files[0];
+  if(!slFile&&!gcFile){logClear();logLine('Upload at least one PDF.','err');return;}
+  var stageNr=sel.type==='stage'?parseInt(document.getElementById('stage-nr').value)||sel.stage:0;
+  document.getElementById('pub-btn').disabled=true;
+  logClear();
+  var rVar='',gcVar='',tempRiders={};
+  var racePath='races/'+sel.id+'/data.js';
+
+  // Load existing startlist if no new one
+  try{
+    var raw=await fetch('https://raw.githubusercontent.com/'+g.user+'/'+g.repo+'/main/'+racePath,{cache:'no-store'});
+    if(raw.ok){
+      var txt=await raw.text();
+      var rm=txt.match(/var R = \{[\s\S]*?\};/);
+      if(rm){rVar=rm[0];for(var m of txt.matchAll(/(\d+):\{n:'([^']+)'/g)){tempRiders[parseInt(m[1])]=m[2];}logLine('Existing startlist loaded','info');}
+    }
+  }catch(e){}
+
+  // Startlist PDF
+  if(slFile){
+    logLine('Reading startlist PDF...','info');
+    try{
+      var b64=await toB64(slFile);
+      var result=await callClaude([
+        {type:'document',source:{type:'base64',media_type:'application/pdf',data:b64}},
+        {type:'text',text:'Extract the full startlist. Return ONLY valid JSON, no markdown:\n{"riders":[{"nr":1,"name":"LASTNAME Firstname","nat":"BEL","team":"Team Name"},...]}\nInclude every single rider.'}
+      ],'Extract cycling startlist from PDF. Return only valid JSON, no explanation.');
+      var parsed=JSON.parse(result.replace(/```json|```/g,'').trim());
+      tempRiders={};
+      parsed.riders.forEach(function(r){tempRiders[r.nr]=r.name;});
+      var parts=parsed.riders.map(function(r){return r.nr+":{n:'"+r.name.replace(/'/g,"\\'")+"',nat:'"+(r.nat||'')+"',t:'"+(r.team||'').replace(/'/g,"\\'")+"'}";});
+      rVar='var R = {'+parts.join(',')+'};';
+      logLine('Startlist: '+parsed.riders.length+' riders','ok');
+    }catch(e){logLine('Startlist error: '+e.message,'err');}
+  }
+
+  // GC PDF
+  if(gcFile){
+    logLine('Reading GC PDF...','info');
+    try{
+      var b64gc=await toB64(gcFile);
+      var gcResult=await callClaude([
+        {type:'document',source:{type:'base64',media_type:'application/pdf',data:b64gc}},
+        {type:'text',text:'Extract the general classification. Return ONLY valid JSON, no markdown:\n{"gc":[{"pos":1,"name":"LASTNAME Firstname","time":"0"},{"pos":2,"name":"LASTNAME Firstname","time":"+3:22"},...]}'}
+      ],'Extract cycling GC from PDF. Return only valid JSON.');
+      var parsedGc=JSON.parse(gcResult.replace(/```json|```/g,'').trim());
+      var wordIdx={};
+      Object.keys(tempRiders).forEach(function(nr){norm(tempRiders[nr]).split(' ').forEach(function(w){if(w.length>3){wordIdx[w]=wordIdx[w]||[];wordIdx[w].push(parseInt(nr));}});});
+      var gcMap={};
+      parsedGc.gc.forEach(function(entry){
+        var words=norm(entry.name).split(' ').filter(function(w){return w.length>3;});
+        var scores={};
+        words.forEach(function(w){(wordIdx[w]||[]).forEach(function(nr){scores[nr]=(scores[nr]||0)+1;});});
+        var best=Object.keys(scores).sort(function(a,b){return scores[b]-scores[a];})[0];
+        if(best)gcMap[best]=entry.time;
+      });
+      var gcPairs=Object.keys(gcMap).map(function(k){return k+':"'+gcMap[k]+'"';});
+      gcVar='\nvar GC_STAGE = '+stageNr+';\nvar GC_INIT = {'+gcPairs.join(',')+'};\n';
+      logLine('GC: '+gcPairs.length+' riders matched','ok');
+    }catch(e){logLine('GC error: '+e.message,'err');}
+  }
+
+  if(!rVar){logLine('No startlist — cannot publish.','err');document.getElementById('pub-btn').disabled=false;return;}
+
+  var js='// Tour Signal — '+sel.name+'\n// Updated: '+new Date().toLocaleString('en-GB')+'\n\n';
+  js+="var raceName = '"+sel.name+"';\n";
+  js+=rVar+'\n';
+  if(gcVar)js+=gcVar;
+
+  logLine('Pushing to GitHub...','info');
+  try{
+    var existing=await ghGet(racePath);
+    await ghPut(racePath,js,existing?existing.sha:null,'Update '+sel.name+(gcFile?' stage '+stageNr:''));
+    logLine('data.js published','ok');
+  }catch(e){logLine('Push error: '+e.message,'err');document.getElementById('pub-btn').disabled=false;return;}
+
+  // Update stage in index.json
+  if(gcFile&&sel.type==='stage'){
+    try{
+      sel.stage=stageNr;
+      await saveIndex();
+      logLine('Stage updated to '+stageNr,'ok');
+      renderRaces();
+    }catch(e){logLine('index.json error: '+e.message,'err');}
+  }
+
+  logLine('\n✓ Done! Trackers update on next reload.','ok');
+  document.getElementById('pub-btn').disabled=false;
+}
+
+loadSettings();
+loadRaces();
+</script>
+</body>
+</html>
