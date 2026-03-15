@@ -4,8 +4,9 @@
 <meta charset="UTF-8">
 <meta name="google" content="notranslate">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Tour Signal — Paris-Nice 2026</title>
+<title>Tour Signal</title>
 <style>
+
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 body{font-family:-apple-system,sans-serif;background:#0a0a0a;color:#fff;height:100dvh;overflow:hidden;display:flex;flex-direction:column;}
 
@@ -210,6 +211,23 @@ body{font-family:-apple-system,sans-serif;background:#0a0a0a;color:#fff;height:1
 .rp-stage{background:#1a001a;color:#cc88ff;border:1px solid #6633aa;}
 .rp-loading{color:#444;font-size:14px;text-align:center;padding:30px;}
 .rp-err{color:#ff4444;font-size:13px;text-align:center;padding:20px;}
+
+.rp-overlay{display:none;position:fixed;inset:0;background:#0a0a0a;z-index:9999;flex-direction:column;align-items:center;justify-content:center;padding:24px;}
+.rp-overlay.show{display:flex;}
+.rp-box{width:100%;max-width:420px;}
+.rp-title{font-size:24px;font-weight:800;margin-bottom:4px;}
+.rp-sub{font-size:11px;color:#444;text-transform:uppercase;letter-spacing:1px;margin-bottom:28px;}
+.rp-item{background:#1a1a1a;border:1px solid #252525;border-radius:12px;padding:16px 18px;margin-bottom:10px;cursor:pointer;transition:border-color 0.15s;}
+.rp-item:hover,.rp-item:active{border-color:#c8102e;}
+.rp-item-name{font-size:17px;font-weight:800;}
+.rp-item-meta{font-size:11px;color:#555;margin-top:4px;}
+.rp-badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:6px;vertical-align:middle;}
+.rp-active{background:#0a2a0a;color:#5dff5d;border:1px solid #2d6b2d;}
+.rp-stage{background:#1a001a;color:#cc88ff;border:1px solid #6633aa;}
+.rp-status{color:#555;font-size:13px;text-align:center;padding:30px 0;}
+.rp-err{color:#ff4444;font-size:13px;text-align:center;padding:20px 0;line-height:1.8;}
+.rp-retry{background:#1e1e1e;border:1px solid #333;color:#aaa;border-radius:8px;padding:10px 18px;font-size:13px;cursor:pointer;margin-top:12px;}
+
 </style>
 </head>
 <body>
@@ -457,11 +475,17 @@ body{font-family:-apple-system,sans-serif;background:#0a0a0a;color:#fff;height:1
   </div>
 </div>
 
-<script>
-/* data.js loaded via race picker */
-</script>
-<script>
+<div class="rp-overlay show" id="racePicker">
+  <div class="rp-box">
+    <div class="rp-title">📡 Tour Signal</div>
+    <div class="rp-sub">Select race</div>
+    <div id="rp-list"><div class="rp-status">Loading races...</div></div>
+  </div>
+</div>
 
+<script>
+var R = {};
+var raceName = "";
 // raceName loaded from data.js
 var cur='',groups=[],dnf=[],recent=[],queue=[],egid=null,pr=null;
 var raceStart=null,raceStop=null,log=[],selEvt=null,selEvtColor='#aaa',selRiderId=null,selRiderName=null;
@@ -904,72 +928,59 @@ function LOAD(){
 }
 
 // CLOCK
-function TK(){
-  var n=new Date();
-  document.getElementById('clk').textContent=n.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
-}
-setInterval(TK,1000);TK();
+
 
 function INIT(){LOAD();RG();RD();RQ();RLG();};
-</script>
 
-<div class="race-picker show" id="racePicker">
-  <div class="rp-box">
-    <div class="rp-title">📡 Tour Signal</div>
-    <div class="rp-sub">Select race</div>
-    <div id="rp-list"><div class="rp-loading">Loading races...</div></div>
-  </div>
-</div>
-
-<script>
-var ghUser = 'bart-bano';
-var ghRepo = 'omloop-tracker';
+var GH_USER = 'bart-bano';
+var GH_REPO = 'omloop-tracker';
 
 async function loadRacePicker() {
   var el = document.getElementById('rp-list');
   try {
     var yr = new Date().getFullYear();
-    var url = 'https://raw.githubusercontent.com/' + ghUser + '/' + ghRepo + '/main/races/index.json';
-    var resp = await fetch(url, {cache:'no-store'});
-    if (!resp.ok) throw new Error('races/index.json not found ('+resp.status+')');
+    var resp = await fetch('https://raw.githubusercontent.com/' + GH_USER + '/' + GH_REPO + '/main/races/index.json', {cache:'no-store'});
+    if (!resp.ok) throw new Error('No race list found (' + resp.status + '). Create a race in admin first.');
     var races = await resp.json();
-    var current = races.filter(function(r){ return r.year === yr && r.active; });
-    if (!current.length) {
-      el.innerHTML = '<div class="rp-err">No active races for '+yr+'.<br><br><button onclick="loadRacePicker()" style="background:#1e1e1e;border:1px solid #333;color:#aaa;border-radius:8px;padding:8px 14px;cursor:pointer;margin-top:8px;">Retry</button></div>';
+    var active = races.filter(function(r) { return r.year === yr && r.active; });
+    if (!active.length) {
+      el.innerHTML = '<div class="rp-err">No active races for ' + yr + '.</div><div style="text-align:center"><button class="rp-retry" onclick="loadRacePicker()">Retry</button></div>';
       return;
     }
-    el.innerHTML = current.map(function(r) {
-      var sb = r.type==='stage' ? '<span class="rp-badge rp-stage">Stage '+r.stage+'</span>' : '';
-      return '<div class="rp-item" onclick="pickRace(''+r.id+'',''+r.name+'')">' +
-        '<div class="rp-item-name">'+r.name+'<span class="rp-badge rp-active">Active</span>'+sb+'</div>' +
-        '<div class="rp-item-meta">'+(r.type==='oneday'?'One day race':'Stage race')+'</div>' +
+    el.innerHTML = active.map(function(r) {
+      var sb = r.type === 'stage' ? '<span class="rp-badge rp-stage">Stage ' + r.stage + '</span>' : '';
+      return '<div class="rp-item" onclick="pickRace('' + r.id + '','' + r.name + '')">' +
+        '<div class="rp-item-name">' + r.name + '<span class="rp-badge rp-active">Active</span>' + sb + '</div>' +
+        '<div class="rp-item-meta">' + (r.type === 'oneday' ? 'One day race' : 'Stage race') + '</div>' +
         '</div>';
     }).join('');
   } catch(e) {
-    el.innerHTML = '<div class="rp-err">'+e.message+'<br><br><button onclick="loadRacePicker()" style="background:#1e1e1e;border:1px solid #333;color:#aaa;border-radius:8px;padding:8px 14px;cursor:pointer;margin-top:8px;">Retry</button></div>';
+    el.innerHTML = '<div class="rp-err">' + e.message + '</div><div style="text-align:center"><button class="rp-retry" onclick="loadRacePicker()">Retry</button></div>';
   }
 }
 
 async function pickRace(id, name) {
   var el = document.getElementById('rp-list');
-  el.innerHTML = '<div class="rp-loading">Loading '+name+'...</div>';
+  el.innerHTML = '<div class="rp-status">Loading ' + name + '...</div>';
   try {
-    var url = 'https://raw.githubusercontent.com/' + ghUser + '/' + ghRepo + '/main/races/' + id + '/data.js';
-    var resp = await fetch(url, {cache:'no-store'});
-    if (!resp.ok) throw new Error('Race data not found. Upload a startlist via the admin first.');
+    var resp = await fetch('https://raw.githubusercontent.com/' + GH_USER + '/' + GH_REPO + '/main/races/' + id + '/data.js', {cache:'no-store'});
+    if (!resp.ok) throw new Error('No startlist yet for ' + name + '. Upload via admin first.');
     var code = await resp.text();
     var sc = document.createElement('script');
     sc.textContent = code;
     document.head.appendChild(sc);
+    if(typeof raceName !== 'undefined') document.getElementById('raceTitle').textContent = raceName;
     document.getElementById('racePicker').classList.remove('show');
     LOAD(); RG(); RD(); RQ(); RLG();
   } catch(e) {
-    el.innerHTML = '<div class="rp-err">'+e.message+'<br><br><button onclick="loadRacePicker()" style="background:#1e1e1e;border:1px solid #333;color:#aaa;border-radius:8px;padding:8px 14px;cursor:pointer;margin-top:8px;">Back</button></div>';
+    el.innerHTML = '<div class="rp-err">' + e.message + '</div><div style="text-align:center"><button class="rp-retry" onclick="loadRacePicker()">Back</button></div>';
   }
 }
 
+function TK(){var n=new Date();document.getElementById('clk').textContent=n.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});}
+setInterval(TK,1000);TK();
 loadRacePicker();
-</script>
 
+</script>
 </body>
 </html>
