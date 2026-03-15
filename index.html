@@ -180,21 +180,42 @@ body { font-family: -apple-system, sans-serif; background: #0a0a0a; color: #fff;
 .rp-loading{color:#444;font-size:14px;text-align:center;padding:30px;}
 .rp-err{color:#ff4444;font-size:13px;text-align:center;padding:20px;}
 
-.rp-overlay{display:none;position:fixed;inset:0;background:#0a0a0a;z-index:9999;flex-direction:column;align-items:center;justify-content:center;padding:24px;}
-.rp-overlay.show{display:flex;}
+.rp-ov{display:none;position:fixed;inset:0;background:#0a0a0a;z-index:9999;flex-direction:column;align-items:center;justify-content:center;padding:24px;overflow-y:auto;}
+.rp-ov.show{display:flex;}
 .rp-box{width:100%;max-width:440px;}
-.rp-title{font-size:24px;font-weight:800;margin-bottom:4px;}
-.rp-sub{font-size:11px;color:#444;text-transform:uppercase;letter-spacing:1px;margin-bottom:28px;}
-.rp-item{background:#1a1a1a;border:1px solid #252525;border-radius:12px;padding:16px 18px;margin-bottom:10px;cursor:pointer;transition:border-color 0.15s;}
+.rp-title{font-size:26px;font-weight:800;margin-bottom:4px;}
+.rp-sub{font-size:11px;color:#444;text-transform:uppercase;letter-spacing:1px;margin-bottom:20px;}
+.rp-item{background:#1a1a1a;border:1px solid #252525;border-radius:12px;padding:14px 16px;margin-bottom:8px;cursor:pointer;display:flex;align-items:center;gap:10px;}
 .rp-item:hover{border-color:#c8102e;}
-.rp-item-name{font-size:17px;font-weight:800;}
-.rp-item-meta{font-size:11px;color:#555;margin-top:4px;}
-.rp-badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:6px;vertical-align:middle;}
-.rp-active{background:#0a2a0a;color:#5dff5d;border:1px solid #2d6b2d;}
-.rp-stage{background:#1a001a;color:#cc88ff;border:1px solid #6633aa;}
-.rp-status{color:#555;font-size:13px;text-align:center;padding:30px 0;}
-.rp-err{color:#ff4444;font-size:13px;text-align:center;padding:20px 0;line-height:1.8;}
-.rp-retry{background:#1e1e1e;border:1px solid #333;color:#aaa;border-radius:8px;padding:8px 16px;font-size:13px;cursor:pointer;margin-top:12px;}
+.rp-item:active{background:#1e0a0a;}
+.rp-iname{font-size:15px;font-weight:800;flex:1;}
+.rp-imeta{font-size:11px;color:#555;margin-top:3px;}
+.rp-badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:5px;vertical-align:middle;}
+.rp-ba{background:#0a2a0a;color:#5dff5d;border:1px solid #2d6b2d;}
+.rp-bs{background:#1a001a;color:#cc88ff;border:1px solid #6633aa;}
+.rp-bo{background:#1a1000;color:#ffaa44;border:1px solid #664400;}
+.rp-status{color:#555;font-size:13px;text-align:center;padding:20px 0;}
+.rp-err{color:#ff6b6b;font-size:13px;text-align:center;padding:16px 0;line-height:1.8;}
+.rp-sep{border:none;border-top:1px solid #1a1a1a;margin:16px 0;}
+.rp-add{width:100%;background:#1e1e1e;border:1px dashed #333;color:#666;border-radius:12px;padding:14px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px;}
+.rp-add:hover{border-color:#555;color:#aaa;}
+.rp-form{background:#141414;border:1px solid #222;border-radius:12px;padding:16px;margin-bottom:8px;}
+.rp-lbl{font-size:12px;color:#888;display:block;margin-bottom:4px;}
+.rp-inp{width:100%;background:#1e1e1e;border:1px solid #333;color:#fff;border-radius:8px;padding:9px 12px;font-size:14px;margin-bottom:10px;outline:none;-webkit-appearance:none;}
+.rp-inp:focus{border-color:#555;}
+.rp-sel{width:100%;background:#1e1e1e;border:1px solid #333;color:#fff;border-radius:8px;padding:9px 12px;font-size:14px;margin-bottom:10px;outline:none;-webkit-appearance:none;}
+.rp-drop{border:1.5px dashed #333;border-radius:8px;padding:14px;text-align:center;cursor:pointer;font-size:12px;color:#555;display:block;margin-bottom:10px;}
+.rp-drop.has-file{border-color:#2d6b2d;color:#5dff5d;}
+.rp-row2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.rp-save{width:100%;background:#c8102e;color:#fff;border:none;border-radius:9px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;}
+.rp-save:disabled{background:#2a2a2a;color:#555;}
+.rp-cancel{width:100%;background:#1e1e1e;border:1px solid #333;color:#aaa;border-radius:9px;padding:10px;font-size:13px;cursor:pointer;margin-top:6px;}
+.rp-tok{background:#1a1a0a;border:1px solid #333;border-radius:8px;padding:10px 12px;font-size:11px;color:#888;margin-bottom:10px;line-height:1.6;}
+.rp-msg{font-size:12px;padding:8px 10px;border-radius:7px;margin-bottom:8px;display:none;}
+.rp-msg.show{display:block;}
+.rp-msg.ok{background:#0a2a0a;color:#5dff5d;border:1px solid #2d6b2d;}
+.rp-msg.err{background:#2a0a0a;color:#ff6b6b;border:1px solid #6b2d2d;}
+.rp-msg.inf{background:#0a0a2a;color:#aaaaff;border:1px solid #2d2d6b;}
 
 </style>
 </head>
@@ -458,13 +479,50 @@ body { font-family: -apple-system, sans-serif; background: #0a0a0a; color: #fff;
   <div class="ov-list" id="gcList"></div>
 </div>
 
-<div class="rp-overlay show" id="racePicker">
+
+<div class="rp-ov show" id="rp">
   <div class="rp-box">
     <div class="rp-title">📡 Tour Signal</div>
     <div class="rp-sub">Select race</div>
     <div id="rp-list"><div class="rp-status">Loading races...</div></div>
+    <hr class="rp-sep">
+    <button class="rp-add" onclick="rpShowAdd()">+ New race</button>
+    <div id="rp-add-form" style="display:none;">
+      <div class="rp-form">
+        <div class="rp-tok">
+          One-time setup: enter your GitHub token to save races for everyone.
+          Token is saved locally on this device.
+        </div>
+        <label class="rp-lbl">GitHub token</label>
+        <input type="password" class="rp-inp" id="rp-token" placeholder="ghp_xxxxxxxxxxxx" autocomplete="off">
+        <label class="rp-lbl">Race name</label>
+        <input type="text" class="rp-inp" id="rp-name" placeholder="e.g. Nokere Koerse 2026">
+        <div class="rp-row2">
+          <div>
+            <label class="rp-lbl">Year</label>
+            <input type="number" class="rp-inp" id="rp-year" value="2026" min="2020" max="2035">
+          </div>
+          <div>
+            <label class="rp-lbl">Type</label>
+            <select class="rp-sel" id="rp-type">
+              <option value="oneday">One day</option>
+              <option value="stage">Stage race</option>
+            </select>
+          </div>
+        </div>
+        <label class="rp-lbl">Startlist CSV</label>
+        <label class="rp-drop" id="rp-csv-zone" for="rp-csv-file">
+          <span id="rp-csv-name">Tap to select CSV</span>
+          <input type="file" accept=".csv,.txt" id="rp-csv-file" style="display:none;" onchange="rpCsvChosen()">
+        </label>
+        <div id="rp-form-msg" class="rp-msg"></div>
+        <button class="rp-save" id="rp-save-btn" onclick="rpSaveRace()">Save & open race</button>
+        <button class="rp-cancel" onclick="rpHideAdd()">Cancel</button>
+      </div>
+    </div>
   </div>
 </div>
+
 
 <script>
 var R = {};
@@ -521,7 +579,7 @@ function RD(){
 
 function AG(type,label,css){groups.push({id:Date.now(),type:type,label:label,css:css,gap:type==='peloton'?'PELOTON':'+0:00',r:[]});RG();}
 function RNM(id,v){var g=groups.find(function(x){return x.id===id;});if(g)g.label=v.toUpperCase();}
-function RFG(gid,rid){var g=groups.find(function(x){return x.id===gid;});if(g){g.r=g.r.filter(function(x){return x!==rid;});RG();}
+function RFG(gid,rid){var g=groups.find(function(x){return x.id===gid;});if(g){g.r=g.r.filter(function(x){return x!==rid;});RG();}}
 function DG(id){groups=groups.filter(function(x){return x.id!==id;});RG();}
 
 function RG(){
@@ -1191,52 +1249,161 @@ function GCBADGE(id){
 
 var GH_USER = 'bart-bano';
 var GH_REPO = 'omloop-tracker';
+var RP_TOKEN_KEY = 'ts_gh_token';
+
+function rpMsg(msg, type) {
+  var e = document.getElementById('rp-form-msg');
+  e.textContent = msg; e.className = 'rp-msg show ' + (type||'inf');
+}
+function rpMsgHide() { document.getElementById('rp-form-msg').className = 'rp-msg'; }
+
+// Load token from localStorage
+window.addEventListener('load', function() {
+  var t = localStorage.getItem(RP_TOKEN_KEY);
+  if(t) document.getElementById('rp-token').value = t;
+  loadRacePicker();
+});
+
+function rpShowAdd() {
+  document.getElementById('rp-add-form').style.display = 'block';
+  document.getElementById('rp-year').value = new Date().getFullYear();
+}
+function rpHideAdd() { document.getElementById('rp-add-form').style.display = 'none'; rpMsgHide(); }
+
+function rpCsvChosen() {
+  var f = document.getElementById('rp-csv-file').files[0];
+  if(!f) return;
+  document.getElementById('rp-csv-name').textContent = f.name;
+  document.getElementById('rp-csv-zone').classList.add('has-file');
+}
+
+async function ghGet(path, token) {
+  var r = await fetch('https://api.github.com/repos/'+GH_USER+'/'+GH_REPO+'/contents/'+path, {
+    headers: {'Authorization':'token '+token, 'Accept':'application/vnd.github.v3+json'}
+  });
+  if(r.status===404) return null;
+  if(!r.ok) { var d=await r.json(); throw new Error(d.message||'GitHub error'); }
+  return r.json();
+}
+
+async function ghPut(path, content, sha, msg, token) {
+  var body = {message: msg||'Tour Signal update', content: btoa(unescape(encodeURIComponent(content)))};
+  if(sha) body.sha = sha;
+  var r = await fetch('https://api.github.com/repos/'+GH_USER+'/'+GH_REPO+'/contents/'+path, {
+    method: 'PUT',
+    headers: {'Authorization':'token '+token, 'Accept':'application/vnd.github.v3+json', 'Content-Type':'application/json'},
+    body: JSON.stringify(body)
+  });
+  var d = await r.json();
+  if(!r.ok) throw new Error(d.message||'GitHub error');
+  return d;
+}
 
 async function loadRacePicker() {
   var el = document.getElementById('rp-list');
   try {
     var yr = new Date().getFullYear();
-    var resp = await fetch('https://raw.githubusercontent.com/' + GH_USER + '/' + GH_REPO + '/main/races/index.json', {cache:'no-store'});
-    if (!resp.ok) throw new Error('No race list found (' + resp.status + '). Check admin.');
+    var resp = await fetch('https://raw.githubusercontent.com/'+GH_USER+'/'+GH_REPO+'/main/races/index.json', {cache:'no-store'});
+    if(!resp.ok) { el.innerHTML = '<div class="rp-status">No races yet — create one below.</div>'; return; }
     var races = await resp.json();
-    var active = races.filter(function(r) { return r.year === yr && r.active; });
-    if (!active.length) {
-      el.innerHTML = '<div class="rp-err">No active races for ' + yr + '.</div><div style="text-align:center"><button class="rp-retry" onclick="loadRacePicker()">Retry</button></div>';
-      return;
-    }
+    var active = races.filter(function(r) { return r.year === yr; });
+    if(!active.length) { el.innerHTML = '<div class="rp-status">No races for '+yr+' — create one below.</div>'; return; }
     el.innerHTML = active.map(function(r) {
-      var sb = r.type === 'stage' ? '<span class="rp-badge rp-stage">Stage ' + r.stage + '</span>' : '';
-      return '<div class="rp-item" onclick="pickRace('' + r.id + '','' + r.name + '')">' +
-        '<div class="rp-item-name">' + r.name + '<span class="rp-badge rp-active">Active</span>' + sb + '</div>' +
-        '<div class="rp-item-meta">' + (r.type === 'oneday' ? 'One day race' : 'Stage race') + '</div>' +
+      var sb = r.type==='stage' ? '<span class="rp-badge rp-bs">Stage '+r.stage+'</span>' : '<span class="rp-badge rp-bo">One day</span>';
+      return '<div class="rp-item" onclick="pickRace(''+r.id+'',''+r.name+'')">'+
+        '<div><div class="rp-iname">'+r.name+sb+'</div><div class="rp-imeta">'+r.year+'</div></div>'+
         '</div>';
     }).join('');
   } catch(e) {
-    el.innerHTML = '<div class="rp-err">' + e.message + '</div><div style="text-align:center"><button class="rp-retry" onclick="loadRacePicker()">Retry</button></div>';
+    el.innerHTML = '<div class="rp-err">'+e.message+'</div>';
   }
 }
 
 async function pickRace(id, name) {
   var el = document.getElementById('rp-list');
-  el.innerHTML = '<div class="rp-status">Loading ' + name + '...</div>';
+  el.innerHTML = '<div class="rp-status">Loading '+name+'...</div>';
   try {
-    var resp = await fetch('https://raw.githubusercontent.com/' + GH_USER + '/' + GH_REPO + '/main/races/' + id + '/data.js', {cache:'no-store'});
-    if (!resp.ok) throw new Error('No data found for ' + name + '. Upload a startlist via admin first.');
+    var resp = await fetch('https://raw.githubusercontent.com/'+GH_USER+'/'+GH_REPO+'/main/races/'+id+'/data.js', {cache:'no-store'});
+    if(!resp.ok) throw new Error('No startlist yet for '+name+'. Upload a CSV first.');
     var code = await resp.text();
     var sc = document.createElement('script');
     sc.textContent = code;
     document.head.appendChild(sc);
     if(typeof raceName !== 'undefined') document.getElementById('raceTitle').textContent = raceName;
-    document.getElementById('racePicker').classList.remove('show');
+    document.getElementById('rp').classList.remove('show');
     LOAD(); RG(); RD(); RLG();
   } catch(e) {
-    el.innerHTML = '<div class="rp-err">' + e.message + '</div><div style="text-align:center"><button class="rp-retry" onclick="loadRacePicker()">Back</button></div>';
+    el.innerHTML = '<div class="rp-err">'+e.message+'<br><br><button onclick="loadRacePicker()" style="background:#1e1e1e;border:1px solid #333;color:#aaa;border-radius:8px;padding:8px 14px;cursor:pointer;">Back</button></div>';
+  }
+}
+
+async function rpSaveRace() {
+  var token = document.getElementById('rp-token').value.trim();
+  var name = document.getElementById('rp-name').value.trim();
+  var year = parseInt(document.getElementById('rp-year').value) || new Date().getFullYear();
+  var type = document.getElementById('rp-type').value;
+  var csvFile = document.getElementById('rp-csv-file').files[0];
+
+  if(!token) { rpMsg('Enter your GitHub token.', 'err'); return; }
+  if(!name)  { rpMsg('Enter a race name.', 'err'); return; }
+  if(!csvFile) { rpMsg('Select a CSV file.', 'err'); return; }
+
+  var btn = document.getElementById('rp-save-btn');
+  btn.disabled = true;
+  rpMsg('Saving token...', 'inf');
+  localStorage.setItem(RP_TOKEN_KEY, token);
+
+  // Parse CSV
+  rpMsg('Reading CSV...', 'inf');
+  var csvText = await new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res(r.result);};r.onerror=rej;r.readAsText(csvFile);});
+  var lines = csvText.split('\n');
+  var riders = [], errors = [];
+  lines.forEach(function(line, i) {
+    if(i===0 && line.toLowerCase().includes('name')) return;
+    var p = line.trim().split(',');
+    if(p.length < 4) return;
+    var nr = parseInt(p[0]);
+    if(isNaN(nr)) return;
+    riders.push(nr+":{n:'"+p[1].trim().replace(/'/g,"\'")+"',nat:'"+p[2].trim()+"',t:'"+p[3].trim().replace(/'/g,"\'")+"'}");
+  });
+  if(!riders.length) { rpMsg('No valid riders found. Check CSV format.', 'err'); btn.disabled=false; return; }
+
+  // Build data.js
+  var raceId = name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'-'+year;
+  var js = '// Tour Signal — '+name.toUpperCase()+'\n// Generated: '+new Date().toLocaleString('en-GB')+'\n\n';
+  js += "var raceName = '"+name.toUpperCase()+"';\n";
+  js += 'var R = {'+riders.join(',')+'};\n';
+
+  rpMsg('Publishing to GitHub...', 'inf');
+  try {
+    // Verify token works
+    var repoCheck = await fetch('https://api.github.com/repos/'+GH_USER+'/'+GH_REPO, {headers:{'Authorization':'token '+token}});
+    if(!repoCheck.ok) throw new Error('Token invalid or repo not found');
+
+    // Load or create races/index.json
+    var idxFile = await ghGet('races/index.json', token);
+    var races = idxFile ? JSON.parse(decodeURIComponent(escape(atob(idxFile.content.replace(/\n/g,''))))) : [];
+    
+    // Add race if not exists
+    if(!races.find(function(r){return r.id===raceId;})) {
+      races.push({id:raceId, name:name.toUpperCase(), year:year, type:type, stage:0, active:true});
+      await ghPut('races/index.json', JSON.stringify(races,null,2), idxFile?idxFile.sha:null, 'Add race: '+name, token);
+    }
+
+    // Push data.js
+    var djFile = await ghGet('races/'+raceId+'/data.js', token);
+    await ghPut('races/'+raceId+'/data.js', js, djFile?djFile.sha:null, 'Upload startlist: '+name, token);
+
+    rpMsg('Done! Loading race...', 'ok');
+    setTimeout(function() { pickRace(raceId, name.toUpperCase()); }, 800);
+  } catch(e) {
+    rpMsg('Error: '+e.message, 'err');
+    btn.disabled = false;
   }
 }
 
 function TK(){var n=new Date();document.getElementById('clk').textContent=n.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
 setInterval(TK,1000);TK();
-loadRacePicker();
 
 </script>
 </body>
