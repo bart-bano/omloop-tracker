@@ -736,7 +736,6 @@ function RESET(){
   RG();RD();RQ();RLG();
   document.getElementById('startLbl').textContent='start';
   document.getElementById('stopLbl').textContent='stop';
-  try{localStorage.clear();}catch(e){}
 }
 
 // CSV RIDERS
@@ -772,11 +771,11 @@ function PTL(){
     document.getElementById('ptResult').innerHTML='✅ <b>'+count+' riders</b> loaded!';
     document.getElementById('ptCurRace').textContent=raceName;
     document.getElementById('ptCurCount').textContent=count+' riders';
-    try{localStorage.setItem('omloop_racename',raceName);localStorage.setItem('omloop_riders',JSON.stringify(newR));}catch(ex){}
+    // riders/raceName not saved to localStorage
     if(confirm('Riders loaded! Reset groups and log for new race?')){
       log=[];groups=[];dnf=[];queue=[];raceStart=null;raceStop=null;gc={};
       RG();RD();RQ();RLG();
-      try{localStorage.clear();localStorage.setItem('omloop_racename',raceName);localStorage.setItem('omloop_riders',JSON.stringify(newR));}catch(ex){}
+      // riders/raceName not saved to localStorage
     }
   };
   reader.readAsText(file);
@@ -882,10 +881,7 @@ function SAVE(){
 }
 function LOAD(){
   try{
-    var storedRace=localStorage.getItem('omloop_racename');
-    if(storedRace&&storedRace!==raceName){localStorage.clear();}
-    var rn=localStorage.getItem('omloop_racename');if(rn){raceName=rn;document.getElementById('raceTitle').textContent=rn;}
-    var rd=localStorage.getItem('omloop_riders');if(rd){var nr=JSON.parse(rd);for(var k in R)delete R[k];for(var k2 in nr)R[k2]=nr[k2];}
+    // raceName and riders always come from data.js
     var gcStored=localStorage.getItem('omloop_gc');
     var gcStageSaved=parseInt(localStorage.getItem('omloop_gc_stage')||'0');
     var gcStageNew=(typeof GC_STAGE!=='undefined'?GC_STAGE:0);
@@ -913,7 +909,6 @@ function INIT(){LOAD();RG();RD();RQ();RLG();};
 fetch('data.js', {cache: 'no-store'})
   .then(function(r){ return r.text(); })
   .then(function(code){
-    try{localStorage.clear();}catch(e){}
     var sc = document.createElement('script');
     sc.textContent = code;
     document.head.appendChild(sc);

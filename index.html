@@ -692,9 +692,9 @@ function PTL(){
     if(newRace){
       raceName=newRace;
       document.getElementById('raceTitle').textContent=newRace;
-      try{localStorage.setItem('omloop_racename',newRace);}catch(e){}
+      // raceName not saved to localStorage
     }
-    try{localStorage.setItem('omloop_riders',JSON.stringify(newR));}catch(e){}
+    // riders not saved to localStorage - always loaded from data.js
     document.getElementById('ptCurRace').textContent=raceName;
     document.getElementById('ptCurCount').textContent=count+' riders';
     el.style.color='#5dff5d';
@@ -762,10 +762,8 @@ function SAVE(){
 
 function LOAD(){
   try{
-    var storedRace=localStorage.getItem('omloop_racename');
-    if(storedRace && storedRace!==raceName){localStorage.clear();}
-    var rn=localStorage.getItem('omloop_racename'); if(rn){raceName=rn;document.getElementById('raceTitle').textContent=rn;}
-    var rd=localStorage.getItem('omloop_riders'); if(rd){var nr=JSON.parse(rd);for(var k in R)delete R[k];for(var k2 in nr)R[k2]=nr[k2];}
+    // raceName always comes from data.js
+    // riders always come from data.js, not localStorage
     var gcStored=localStorage.getItem('omloop_gc');
     var gcStageSaved=parseInt(localStorage.getItem('omloop_gc_stage')||'0');
     var gcStageNew=(typeof GC_STAGE!=='undefined'?GC_STAGE:0);
@@ -1168,7 +1166,6 @@ fetch('data.js', {cache: 'no-store'})
   .then(function(r){ return r.text(); })
   .then(function(code){
     // Always clear localStorage so new race data is never overridden
-    try{localStorage.clear();}catch(e){}
     var sc = document.createElement('script');
     sc.textContent = code;
     document.head.appendChild(sc);
