@@ -913,6 +913,7 @@ function INIT(){LOAD();RG();RD();RQ();RLG();};
 fetch('data.js', {cache: 'no-store'})
   .then(function(r){ return r.text(); })
   .then(function(code){
+    try{localStorage.clear();}catch(e){}
     var sc = document.createElement('script');
     sc.textContent = code;
     document.head.appendChild(sc);

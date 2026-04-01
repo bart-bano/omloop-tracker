@@ -1167,6 +1167,8 @@ function GCBADGE(id){
 fetch('data.js', {cache: 'no-store'})
   .then(function(r){ return r.text(); })
   .then(function(code){
+    // Always clear localStorage so new race data is never overridden
+    try{localStorage.clear();}catch(e){}
     var sc = document.createElement('script');
     sc.textContent = code;
     document.head.appendChild(sc);
@@ -1174,7 +1176,6 @@ fetch('data.js', {cache: 'no-store'})
     LOAD(); RG(); RD(); RLG();
   })
   .catch(function(){
-    // fallback: initialise without data.js
     LOAD(); RG(); RD(); RLG();
   });
 
