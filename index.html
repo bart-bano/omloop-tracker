@@ -164,28 +164,12 @@ body { font-family: -apple-system, sans-serif; background: #0a0a0a; color: #fff;
 .gc-time { font-size: 16px; font-weight: 800; font-family: monospace; color: #cc88ff; min-width: 60px; text-align: right; }
 .gc-time.leader { color: #ffdd00; }
 .gc-edit-btn { background: #1a002a; border: 1px solid #6633aa; color: #cc88ff; border-radius: 6px; padding: 4px 8px; font-size: 11px; cursor: pointer; flex-shrink: 0; }
-
-.race-picker{display:none;position:fixed;inset:0;background:#0a0a0a;z-index:9999;flex-direction:column;align-items:center;justify-content:center;padding:20px;}
-.race-picker.show{display:flex;}
-.rp-box{width:100%;max-width:420px;}
-.rp-title{font-size:22px;font-weight:800;margin-bottom:4px;}
-.rp-sub{font-size:12px;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:24px;}
-.rp-item{background:#1a1a1a;border:1px solid #252525;border-radius:12px;padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:border-color 0.15s;}
-.rp-item:hover{border-color:#c8102e;}
-.rp-item-name{font-size:16px;font-weight:800;}
-.rp-item-meta{font-size:11px;color:#555;margin-top:3px;}
-.rp-badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:6px;vertical-align:middle;}
-.rp-active{background:#0a2a0a;color:#5dff5d;border:1px solid #2d6b2d;}
-.rp-stage{background:#1a001a;color:#cc88ff;border:1px solid #6633aa;}
-.rp-loading{color:#444;font-size:14px;text-align:center;padding:30px;}
-.rp-err{color:#ff4444;font-size:13px;text-align:center;padding:20px;}
-
 </style>
 </head>
 <body>
 
 <div class="header">
-  <div><div class="sub">TEAM CAR</div><h1 id="raceTitle">PARIS-NICE 2026</h1></div>
+  <div><div class="sub">TEAM CAR</div><h1 id="raceTitle">TOUR SIGNAL</h1></div>
   <div style="display:flex;align-items:center;gap:8px">
     <button id="startBtn" onclick="STRT()" style="background:#0a3a0a;border:2px solid #5dff5d;color:#5dff5d;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:800;cursor:pointer;line-height:1.2">🏁 START<br><span id="startLbl" style="font-size:9px;font-weight:400;opacity:0.7">tap to start</span></button>
     <button id="stopBtn" onclick="STP()" style="background:#1a1a1a;border:2px solid #444;color:#666;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:800;cursor:pointer;line-height:1.2">🏴 STOP<br><span id="stopLbl" style="font-size:9px;font-weight:400;opacity:0.7">finish</span></button>
@@ -443,6 +427,11 @@ body { font-family: -apple-system, sans-serif; background: #0a0a0a; color: #fff;
 </div>
 
 <script>
+// ── INITIALISE GLOBALS BEFORE FETCH ──────────────────────────────────────────
+var R = {};
+var raceName = 'TOUR SIGNAL';
+// ─────────────────────────────────────────────────────────────────────────────
+
 var cur='',groups=[],dnf=[],recent=[],queue=[],egid=null,pr=null;
 
 function P(n){if(cur.length>=3)return;cur+=n;UD();LK();}
@@ -642,9 +631,6 @@ function OOV(id){
 }
 function COV(){document.getElementById('ovOv').classList.remove('show');}
 
-// CSV DEELNEMERS
-// raceName loaded from data.js
-
 function OPT(){
   document.getElementById('ptCurRace').textContent=raceName;
   document.getElementById('ptCurCount').textContent=Object.keys(R).length+' riders';
@@ -692,9 +678,7 @@ function PTL(){
     if(newRace){
       raceName=newRace;
       document.getElementById('raceTitle').textContent=newRace;
-      // raceName not saved to localStorage
     }
-    // riders not saved to localStorage - always loaded from data.js
     document.getElementById('ptCurRace').textContent=raceName;
     document.getElementById('ptCurCount').textContent=count+' riders';
     el.style.color='#5dff5d';
@@ -733,22 +717,10 @@ function OKG(){
   CGM();RG();
 }
 
-setInterval(function(){
-  document.getElementById('clk').textContent=new Date().toLocaleTimeString('nl-BE',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-},1000);
-
-document.addEventListener('keydown',function(e){
-  if(e.target.tagName==='INPUT')return;
-  if(e.key>='0'&&e.key<='9')P(e.key);
-  else if(e.key==='Backspace')DEL();
-  else if(e.key==='Escape')CLR();
-});
-
 // LOG
 var log=[],selEvt=null,selEvtColor='#aaa',selRiderId=null,selRiderName=null;
 var raceStart=null, raceStop=null;
 
-// OPSLAAN & LADEN
 function SAVE(){
   try{
     localStorage.setItem('omloop_log', JSON.stringify(log));
@@ -762,8 +734,6 @@ function SAVE(){
 
 function LOAD(){
   try{
-    // raceName always comes from data.js
-    // riders always come from data.js, not localStorage
     var gcStored=localStorage.getItem('omloop_gc');
     var gcStageSaved=parseInt(localStorage.getItem('omloop_gc_stage')||'0');
     var gcStageNew=(typeof GC_STAGE!=='undefined'?GC_STAGE:0);
@@ -809,7 +779,6 @@ function RESET(){
   RG(); RD(); RLG();
 }
 
-
 function STRT(){
   if(raceStart){
     if(!confirm('Race already started at '+raceStart+'. Restart?')) return;
@@ -842,11 +811,6 @@ function STP(){
   SAVE();
 }
 
-function KM(){
-  // returns km elapsed based on race start if available, else empty
-  return '';
-}
-
 function ALG(type, riderId, riderName, note, color){
   var now=new Date();
   var time=now.toLocaleTimeString('nl-BE',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
@@ -855,7 +819,6 @@ function ALG(type, riderId, riderName, note, color){
   log.unshift({id:Date.now(),time:time,km:'',type:type,color:col,riderId:riderId||null,riderName:riderName||null,note:note||''});
   SAVE();
 }
-var evtColors={'🚨 Crash':'#ff6b6b','🔧 Flat tyre':'#ffaa44','⚡ Attack':'#5daaff','⚙️ Mechanical':'#dddd44','🚫 DNF':'#ff4444','📝 Note':'#aaa'};
 
 function OLG(){document.getElementById('lgOv').classList.add('show');RLG();}
 function CLG(){document.getElementById('lgOv').classList.remove('show');}
@@ -866,12 +829,6 @@ function SEV(type,color){
   event.target.classList.add('sel');
 }
 
-function OLR(){
-  document.getElementById('lrNum').value='';
-  document.getElementById('lrResult').innerHTML='Enter a number';
-  document.getElementById('lrResult').style.color='#666';
-  document.getElementById('lrOv').classList.add('show');
-}
 function LRF(){
   var id=parseInt(document.getElementById('lrNum').value);
   var r=R[id];
@@ -886,11 +843,8 @@ function LRF(){
     selRiderId=null; selRiderName=null;
   }
 }
-function CLR2(){selRiderId=null;selRiderName=null;document.getElementById('lgRiderTxt').textContent='Rider (optional)';document.getElementById('lgRiderTxt').style.color='#555';document.getElementById('lrOv').classList.remove('show');}
-function CLR3(){
-  if(selRiderId){document.getElementById('lgRiderTxt').textContent=selRiderId+' '+selRiderName;document.getElementById('lgRiderTxt').style.color='#fff';}
-  document.getElementById('lrOv').classList.remove('show');
-}
+function CLR2(){selRiderId=null;selRiderName=null;document.getElementById('lrOv').classList.remove('show');}
+function CLR3(){document.getElementById('lrOv').classList.remove('show');}
 
 function LGS(){
   var id=parseInt(document.getElementById('lgRiderNum').value);
@@ -944,7 +898,7 @@ function RLG(){
 }
 
 function OEX(){
-  var txt='RACE LOG - \n';
+  var txt='RACE LOG - '+raceName+'\n';
   txt+='Generated: '+new Date().toLocaleString('en-GB')+'\n';
   if(raceStart) txt+='Race started: '+raceStart+'\n';
   if(raceStop) txt+='Finish: '+raceStop+'\n';
@@ -1008,7 +962,6 @@ function GCLC(){
       var nr=parseInt(parts[0]);
       if(isNaN(nr)){errors.push('Lijn '+(i+1)+': invalid number');return;}
       var tijd=parts[1].trim();
-      // normalize
       if(tijd==='0'||tijd.toLowerCase()==='leader'){newGc[nr]='0';}
       else{newGc[nr]=tijd.startsWith('+')?tijd:'+'+tijd;}
       count++;
@@ -1041,7 +994,6 @@ function GCS(){
     gcSelId=id;
     el.style.color='#cc88ff';
     el.innerHTML='<b>'+id+'</b> '+r.n+'<br><span style="color:#f0c040;font-size:10px">'+r.t+'</span>';
-    // prefill existing time if any
     if(gc[id]) document.getElementById('gcTime').value=gc[id]==='0'?'Leader':gc[id];
   } else {
     gcSelId=null;
@@ -1059,7 +1011,6 @@ function GCOK(){
   var t=document.getElementById('gcTime').value.trim();
   if(!t){delete gc[gcSelId];}
   else{
-    // normalize: leader = '0', anders ensure + prefix
     if(t.toLowerCase()==='leader'||t==='0'){gc[gcSelId]='0';}
     else{gc[gcSelId]=t.startsWith('+')?t:'+'+t;}
   }
@@ -1081,7 +1032,6 @@ function GCFL(f){
 }
 
 function GCTS(t){
-  // convert time string to seconds for sorting
   if(t==='0') return 0;
   var m=t.replace('+','').split(':');
   if(m.length===3) return parseInt(m[0])*3600+parseInt(m[1])*60+(parseInt(m[2])||0);
@@ -1090,18 +1040,9 @@ function GCTS(t){
 
 function RGC(){
   var el=document.getElementById('gcList');
-  // Build sorted list
-  var entries=[];
-  if(gcFilter===0){
-    // all riders, those with gc time first sorted, then rest
-    var withTime=Object.keys(gc).map(function(id){return {id:parseInt(id),t:gc[id]};});
-    withTime.sort(function(a,b){return GCTS(a.t)-GCTS(b.t);});
-    entries=withTime;
-  } else {
-    var withTime2=Object.keys(gc).map(function(id){return {id:parseInt(id),t:gc[id]};});
-    withTime2.sort(function(a,b){return GCTS(a.t)-GCTS(b.t);});
-    entries=withTime2;
-  }
+  var withTime=Object.keys(gc).map(function(id){return {id:parseInt(id),t:gc[id]};});
+  withTime.sort(function(a,b){return GCTS(a.t)-GCTS(b.t);});
+  var entries=withTime;
   document.getElementById('gcCount').textContent=Object.keys(gc).length+' riders with time';
   if(!entries.length){
     el.innerHTML='<div style="color:#444;text-align:center;padding:30px;font-size:14px;">No times entered yet.<br><br>Search a rider and enter their time gap.</div>';
@@ -1127,17 +1068,13 @@ function RGC(){
 }
 
 function GCED(id){
-  // prefill form for editing
   document.getElementById('gcNum').value=id;
   GCS();
   document.getElementById('gcTime').value=gc[id]==='0'?'Leader':gc[id]||'';
 }
 
-// Show GC in rider lookup
 function PCSURL(name){
-  // Convert "LASTNAME Firstname" to "firstname-lastname" for PCS URL
   var parts=name.trim().split(' ');
-  // Last word is typically the first name, rest is last name
   var fname=parts[parts.length-1];
   var lname=parts.slice(0,parts.length-1).join(' ');
   var slug=(fname+'-'+lname).toLowerCase()
@@ -1153,7 +1090,6 @@ function PCSURL(name){
 function GCBADGE(id){
   if(!gc[id]) return '';
   var t=gc[id];
-  // find position
   var entries=Object.keys(gc).map(function(k){return {id:parseInt(k),t:gc[k]};});
   entries.sort(function(a,b){return GCTS(a.t)-GCTS(b.t);});
   var pos=entries.findIndex(function(e){return e.id===id;})+1;
@@ -1161,18 +1097,32 @@ function GCBADGE(id){
   return '<div class="gc-badge">'+(isLeader?'👑 Leader':'GC #'+pos+' | '+t)+'</div>';
 }
 
-// Startup: load data.js then initialise
+document.addEventListener('keydown',function(e){
+  if(e.target.tagName==='INPUT')return;
+  if(e.key>='0'&&e.key<='9')P(e.key);
+  else if(e.key==='Backspace')DEL();
+  else if(e.key==='Escape')CLR();
+});
+
+// ── STARTUP: fetch data.js fresh, then initialise ────────────────────────────
 fetch('data.js', {cache: 'no-store'})
   .then(function(r){ return r.text(); })
   .then(function(code){
-    // Always clear localStorage so new race data is never overridden
     var sc = document.createElement('script');
     sc.textContent = code;
     document.head.appendChild(sc);
-    if(typeof raceName !== 'undefined') document.getElementById('raceTitle').textContent = raceName;
+    // RIDERS: data.js defines RIDERS array → build R lookup
+    if(typeof RIDERS !== 'undefined'){
+      RIDERS.forEach(function(rd){ R[rd.nr]={n:rd.name,nat:rd.nat,t:rd.team}; });
+    }
+    if(typeof RACE_NAME !== 'undefined'){
+      raceName = RACE_NAME;
+      document.getElementById('raceTitle').textContent = RACE_NAME;
+    }
     LOAD(); RG(); RD(); RLG();
   })
-  .catch(function(){
+  .catch(function(err){
+    console.warn('data.js fetch failed:', err);
     LOAD(); RG(); RD(); RLG();
   });
 
